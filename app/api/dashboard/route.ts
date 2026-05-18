@@ -61,11 +61,13 @@ export async function GET(request: NextRequest) {
 
   const eventCountByLink = new Map<string, number>();
   const countryCounts = new Map<string, number>();
+  const locationCounts = new Map<string, number>();
   const referrerCounts = new Map<string, number>();
 
   for (const event of events) {
     eventCountByLink.set(event.link_id, (eventCountByLink.get(event.link_id) ?? 0) + 1);
     countryCounts.set(event.country ?? "Desconhecido", (countryCounts.get(event.country ?? "Desconhecido") ?? 0) + 1);
+    locationCounts.set(getLocationLabel(event), (locationCounts.get(getLocationLabel(event)) ?? 0) + 1);
 
     const referrer = getReferrerLabel(event.referrer);
     referrerCounts.set(referrer, (referrerCounts.get(referrer) ?? 0) + 1);
@@ -90,6 +92,7 @@ export async function GET(request: NextRequest) {
       trackedEvents: eventCountByLink.get(link.id) ?? 0
     })),
     countries: toRanking(countryCounts),
+    locations: toRanking(locationCounts),
     referrers: toRanking(referrerCounts),
     recentEvents: events.slice(0, 20).map((event) => ({
       id: event.id,
@@ -103,6 +106,22 @@ export async function GET(request: NextRequest) {
     })),
     baseUrl: getPublicBaseUrl()
   });
+}
+
+function getLocationLabel(event: ClickEvent) {
+  if (event.city && event.region) {
+    return `${event.city}, ${event.region}`;
+  }
+
+  if (event.city) {
+    return event.city;
+  }
+
+  if (event.region && event.country) {
+    return `${event.region}, ${event.country}`;
+  }
+
+  return event.country ?? "Desconhecido";
 }
 
 function toRanking(map: Map<string, number>) {

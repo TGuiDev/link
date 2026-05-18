@@ -2,6 +2,8 @@
 
 import { createClient } from "@supabase/supabase-js";
 
+let supabaseBrowser: ReturnType<typeof createClient> | null = null;
+
 export function getSupabaseBrowser() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -10,7 +12,11 @@ export function getSupabaseBrowser() {
     throw new Error("Supabase public environment variables are missing.");
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  if (supabaseBrowser) {
+    return supabaseBrowser;
+  }
+
+  supabaseBrowser = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       flowType: "implicit",
       detectSessionInUrl: true,
@@ -18,4 +24,6 @@ export function getSupabaseBrowser() {
       autoRefreshToken: true
     }
   });
+
+  return supabaseBrowser;
 }

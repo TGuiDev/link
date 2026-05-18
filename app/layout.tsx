@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   title: "Link",
   description: "Encurtador de links simples, bonito e sem login.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://link.guidev.site"),
+  icons: {
+    icon: "/Dark_Theme_Logo.svg",
+    shortcut: "/Dark_Theme_Logo.svg"
+  },
   openGraph: {
     title: "Link",
     description: "Crie links curtos randomicos ou personalizados.",

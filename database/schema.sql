@@ -28,6 +28,19 @@ create table if not exists public.link_click_events (
 create index if not exists link_click_events_link_id_idx on public.link_click_events (link_id);
 create index if not exists link_click_events_created_at_idx on public.link_click_events (created_at desc);
 
+create table if not exists public.app_stats (
+  id text primary key default 'global',
+  total_links integer not null default 0,
+  updated_at timestamptz not null default now(),
+  constraint app_stats_singleton check (id = 'global')
+);
+
+insert into public.app_stats (id, total_links)
+values ('global', (select count(*)::integer from public.links))
+on conflict (id) do update
+set total_links = excluded.total_links,
+    updated_at = now();
+
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -53,19 +66,55 @@ as $$
   where slug = link_slug;
 $$;
 
+create or replace function public.sync_link_total_stats()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'INSERT' then
+    insert into public.app_stats (id, total_links)
+    values ('global', 1)
+    on conflict (id) do update
+    set total_links = public.app_stats.total_links + 1,
+        updated_at = now();
+  elsif tg_op = 'DELETE' then
+    update public.app_stats
+    set total_links = greatest(total_links - 1, 0),
+        updated_at = now()
+    where id = 'global';
+  end if;
+
+  return null;
+end;
+$$;
+
+drop trigger if exists links_sync_total_stats on public.links;
+create trigger links_sync_total_stats
+after insert or delete on public.links
+for each row
+execute function public.sync_link_total_stats();
+
 alter table public.links enable row level security;
 alter table public.link_click_events enable row level security;
+alter table public.app_stats enable row level security;
 
 drop policy if exists "Links can be read by service role only" on public.links;
 drop policy if exists "Links can be inserted by service role only" on public.links;
 drop policy if exists "Links can be updated by service role only" on public.links;
 drop policy if exists "Link events can be read by service role only" on public.link_click_events;
 drop policy if exists "Link events can be inserted by service role only" on public.link_click_events;
+drop policy if exists "Public stats can be read by anyone" on public.app_stats;
 
 create policy "Links can be read by service role only"
 on public.links
 for select
 using (false);
+
+create policy "Users can read their own links for realtime"
+on public.links
+for select
+to authenticated
+using (auth.uid() = user_id);
 
 create policy "Links can be inserted by service role only"
 on public.links
@@ -86,3 +135,37 @@ create policy "Link events can be inserted by service role only"
 on public.link_click_events
 for insert
 with check (false);
+
+create policy "Public stats can be read by anyone"
+on public.app_stats
+for select
+to anon, authenticated
+using (true);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'links'
+  ) then
+    alter publication supabase_realtime add table public.links;
+  end if;
+end;
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'app_stats'
+  ) then
+    alter publication supabase_realtime add table public.app_stats;
+  end if;
+end;
+$$;
