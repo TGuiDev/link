@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { getClickMetadata } from "@/lib/request-meta";
 
 type RouteContext = {
   params: Promise<{
@@ -7,11 +8,11 @@ type RouteContext = {
   }>;
 };
 
-export async function GET(_request: Request, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
   const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase.from("links").select("url").eq("slug", slug).single();
+  const { data, error } = await supabase.from("links").select("id,url").eq("slug", slug).single();
 
   if (error || !data) {
     return new Response(notFoundHtml(slug), {
@@ -23,6 +24,11 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   await supabase.rpc("increment_link_clicks", { link_slug: slug });
+  await supabase.from("link_click_events").insert({
+    link_id: data.id,
+    ...getClickMetadata(request)
+  });
+
   return NextResponse.redirect(data.url);
 }
 

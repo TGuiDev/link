@@ -15,7 +15,7 @@ export async function GET(_request: Request, context: RouteContext) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("links")
-      .select("slug,url,clicks")
+      .select("slug,url,clicks,created_at")
       .eq("slug", slug)
       .single();
 
@@ -23,7 +23,7 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Link nao encontrado." }, { status: 404 });
     }
 
-    return NextResponse.json(toLinkResponse(data.slug, data.url, data.clicks));
+    return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), createdAt: data.created_at });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado.";
     return NextResponse.json({ error: message, baseUrl: getPublicBaseUrl() }, { status: 500 });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSlug, normalizeUrl, assertValidCustomSlug, toLinkResponse } from "@/lib/links";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { getAuthenticatedUser } from "@/lib/auth";
 
 type CreateLinkPayload = {
   url?: string;
@@ -14,14 +15,16 @@ export async function POST(request: NextRequest) {
     const originalUrl = normalizeUrl(body.url ?? "");
     const requestedSlug = (body.customSlug ?? body.slug ?? "").trim();
     const supabase = getSupabaseAdmin();
+    const user = await getAuthenticatedUser(request);
+    const owner = user ? { user_id: user.id } : {};
 
     if (requestedSlug) {
       assertValidCustomSlug(requestedSlug);
 
       const { data, error } = await supabase
         .from("links")
-        .insert({ slug: requestedSlug, url: originalUrl })
-        .select("slug,url,clicks")
+        .insert({ slug: requestedSlug, url: originalUrl, ...owner })
+        .select("id,slug,url,clicks,created_at,user_id")
         .single();
 
       if (error?.code === "23505") {
@@ -32,15 +35,15 @@ export async function POST(request: NextRequest) {
         throw error ?? new Error("Nao foi possivel criar o link.");
       }
 
-      return NextResponse.json(toLinkResponse(data.slug, data.url, data.clicks), { status: 201 });
+      return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), id: data.id }, { status: 201 });
     }
 
     for (let attempt = 0; attempt < 6; attempt += 1) {
       const slug = generateSlug(attempt > 3 ? 9 : 7);
       const { data, error } = await supabase
         .from("links")
-        .insert({ slug, url: originalUrl })
-        .select("slug,url,clicks")
+        .insert({ slug, url: originalUrl, ...owner })
+        .select("id,slug,url,clicks,created_at,user_id")
         .single();
 
       if (error?.code === "23505") {
@@ -51,7 +54,7 @@ export async function POST(request: NextRequest) {
         throw error ?? new Error("Nao foi possivel criar o link.");
       }
 
-      return NextResponse.json(toLinkResponse(data.slug, data.url, data.clicks), { status: 201 });
+      return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), id: data.id }, { status: 201 });
     }
 
     return NextResponse.json({ error: "Nao foi possivel gerar um link unico. Tente novamente." }, { status: 503 });

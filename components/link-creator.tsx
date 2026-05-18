@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
-import { Check, Code2, Copy, LinkIcon, Loader2, LockKeyhole, Moon, Sparkles, Sun, Wand2 } from "lucide-react";
+import { Check, Code2, Copy, LinkIcon, Loader2, LockKeyhole, Moon, Sparkles, Sun, UserRound, Wand2 } from "lucide-react";
 
 type ShortenedLink = {
   slug: string;
@@ -111,72 +112,43 @@ export function LinkCreator() {
               </div>
             </div>
 
-            <button
-              type="button"
-              className={`relative h-11 w-[5.25rem] rounded-full border border-zinc-200 bg-white/75 p-1 shadow-sm backdrop-blur hover:border-emerald-300 dark:border-white/10 dark:bg-white/10 dark:hover:border-emerald-400 ${themeTransition}`}
-              onClick={toggleTheme}
-              aria-label="Alternar tema"
-              title="Alternar tema"
-            >
-              <span className="absolute inset-y-0 left-3 flex items-center text-amber-500">
-                <Sun size={16} />
-              </span>
-              <span className="absolute inset-y-0 right-3 flex items-center text-sky-300">
-                <Moon size={16} />
-              </span>
-              <span
-                className={`relative z-10 grid h-9 w-9 place-items-center rounded-full bg-zinc-950 text-white shadow-md transition-transform duration-500 ease-out dark:translate-x-9 dark:bg-emerald-300 dark:text-zinc-950`}
+            <div className="flex items-center gap-2">
+              <Link
+                className={`hidden h-11 items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white/75 px-4 text-sm font-black text-zinc-800 shadow-sm backdrop-blur hover:border-emerald-300 hover:text-emerald-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100 dark:hover:border-emerald-400 sm:inline-flex ${themeTransition}`}
+                href="/dashboard"
               >
-                {theme === "dark" ? <Moon size={16} /> : <Sun size={16} />}
-              </span>
-            </button>
+                <UserRound size={16} />
+                Painel
+              </Link>
+              <Link
+                className={`hidden h-11 items-center justify-center rounded-full bg-zinc-950 px-4 text-sm font-black text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-300 dark:text-zinc-950 dark:hover:bg-emerald-200 sm:inline-flex ${themeTransition}`}
+                href="/login"
+              >
+                Entrar
+              </Link>
+              <button
+                type="button"
+                className={`relative h-11 w-[5.25rem] rounded-full border border-zinc-200 bg-white/75 p-1 shadow-sm backdrop-blur hover:border-emerald-300 dark:border-white/10 dark:bg-white/10 dark:hover:border-emerald-400 ${themeTransition}`}
+                onClick={toggleTheme}
+                aria-label="Alternar tema"
+                title="Alternar tema"
+              >
+                <span className="absolute inset-y-0 left-3 flex items-center text-amber-500">
+                  <Sun size={16} />
+                </span>
+                <span className="absolute inset-y-0 right-3 flex items-center text-sky-300">
+                  <Moon size={16} />
+                </span>
+                <span
+                  className={`relative z-10 grid h-9 w-9 place-items-center rounded-full bg-zinc-950 text-white shadow-md transition-transform duration-500 ease-out dark:translate-x-9 dark:bg-emerald-300 dark:text-zinc-950`}
+                >
+                  {theme === "dark" ? <Moon size={16} /> : <Sun size={16} />}
+                </span>
+              </button>
+            </div>
           </header>
 
           <div className="grid flex-1 items-center gap-8 pb-8 md:grid-cols-[1fr_0.92fr] md:pb-10">
-            <div className="space-y-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3 py-1.5 text-sm font-bold text-emerald-800 shadow-sm backdrop-blur transition-colors duration-500 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
-                <Sparkles size={15} />
-                Encurtador simples para web e API
-              </div>
-
-              <div className="max-w-2xl space-y-5">
-                <h1 className="text-5xl font-black leading-[0.96] tracking-normal sm:text-7xl">
-                  Links curtos, bonitos e direto ao ponto.
-                </h1>
-                <p className="max-w-xl text-lg font-medium leading-8 text-zinc-700 transition-colors duration-500 sm:text-xl dark:text-zinc-300">
-                  Crie URLs curtas com slugs aleatorios ou personalizados. Sem conta, sem painel confuso, pronto para
-                  usar no navegador ou integrar em qualquer projeto.
-                </p>
-              </div>
-
-              <div className="grid gap-3 text-sm font-bold text-zinc-700 sm:grid-cols-3 dark:text-zinc-200">
-                {["Sem login", "Random ou custom", "API pronta"].map((item) => (
-                  <div
-                    className={`rounded-lg border border-zinc-200 bg-white/70 px-4 py-3 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.07] ${themeTransition}`}
-                    key={item}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-
-              <div
-                className={`rounded-lg border border-zinc-200 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.07] ${themeTransition}`}
-              >
-                <div className="mb-3 flex items-center gap-2 text-sm font-black text-zinc-900 dark:text-white">
-                  <Code2 size={17} />
-                  API em uma chamada
-                </div>
-                <pre className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4 text-xs font-semibold leading-6 text-emerald-100 shadow-inner">
-                  <code>{`POST /api/links
-{
-  "url": "https://guidev.site",
-  "slug": "portfolio"
-}`}</code>
-                </pre>
-              </div>
-            </div>
-
             <div
               className={`rounded-[1.25rem] border border-white/80 bg-white/82 p-3 shadow-[0_28px_90px_rgba(15,23,42,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/72 dark:shadow-black/40 ${themeTransition}`}
             >
@@ -196,11 +168,10 @@ export function LinkCreator() {
                   <div className="grid grid-cols-2 gap-2 rounded-lg bg-zinc-100 p-1 transition-colors duration-500 dark:bg-white/10">
                     <button
                       type="button"
-                      className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition duration-300 ${
-                        mode === "random"
-                          ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-900 dark:text-white"
-                          : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
-                      }`}
+                      className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition duration-300 ${mode === "random"
+                        ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-900 dark:text-white"
+                        : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                        }`}
                       onClick={() => setMode("random")}
                     >
                       <Wand2 size={17} />
@@ -208,11 +179,10 @@ export function LinkCreator() {
                     </button>
                     <button
                       type="button"
-                      className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition duration-300 ${
-                        mode === "custom"
-                          ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-900 dark:text-white"
-                          : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
-                      }`}
+                      className={`flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-bold transition duration-300 ${mode === "custom"
+                        ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-900 dark:text-white"
+                        : "text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                        }`}
                       onClick={() => setMode("custom")}
                     >
                       <LockKeyhole size={17} />
@@ -281,6 +251,49 @@ export function LinkCreator() {
                     </div>
                   </div>
                 ) : null}
+              </div>
+            </div>
+            <div className="space-y-7">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3 py-1.5 text-sm font-bold text-emerald-800 shadow-sm backdrop-blur transition-colors duration-500 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-200">
+                <Sparkles size={15} />
+                Encurtador simples para web e API
+              </div>
+
+              <div className="max-w-2xl space-y-5">
+                <h1 className="text-5xl font-black leading-[0.96] tracking-normal sm:text-7xl">
+                  Links curtos, bonitos e direto ao ponto.
+                </h1>
+                <p className="max-w-xl text-lg font-medium leading-8 text-zinc-700 transition-colors duration-500 sm:text-xl dark:text-zinc-300">
+                  Crie URLs curtas com slugs aleatorios ou personalizados. Sem conta, sem painel confuso, pronto para
+                  usar no navegador ou integrar em qualquer projeto.
+                </p>
+              </div>
+
+              <div className="grid gap-3 text-sm font-bold text-zinc-700 sm:grid-cols-3 dark:text-zinc-200">
+                {["Sem login", "Random ou custom", "API pronta"].map((item) => (
+                  <div
+                    className={`rounded-lg border border-zinc-200 bg-white/70 px-4 py-3 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.07] ${themeTransition}`}
+                    key={item}
+                  >
+                    {item}
+                  </div>
+                ))}
+              </div>
+
+              <div
+                className={`rounded-lg border border-zinc-200 bg-white/70 p-4 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.07] ${themeTransition}`}
+              >
+                <div className="mb-3 flex items-center gap-2 text-sm font-black text-zinc-900 dark:text-white">
+                  <Code2 size={17} />
+                  API em uma chamada
+                </div>
+                <pre className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4 text-xs font-semibold leading-6 text-emerald-100 shadow-inner">
+                  <code>{`POST /api/links
+{
+  "url": "https://guidev.site",
+  "slug": "portfolio"
+}`}</code>
+                </pre>
               </div>
             </div>
           </div>

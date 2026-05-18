@@ -1,4 +1,15 @@
-const RESERVED_SLUGS = new Set(["api", "admin", "assets", "dashboard", "favicon.ico"]);
+const RESERVED_SLUGS = new Set([
+  "api",
+  "admin",
+  "assets",
+  "auth",
+  "cadastro",
+  "dashboard",
+  "favicon.ico",
+  "login",
+  "nova-senha",
+  "recuperar-senha"
+]);
 const SLUG_ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const CUSTOM_SLUG_REGEX = /^[a-zA-Z0-9_-]{3,48}$/;
 

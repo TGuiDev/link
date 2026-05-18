@@ -10,6 +10,8 @@ Encurtador de links sem login feito com Next.js, Tailwind e Supabase.
 
 ```bash
 NEXT_PUBLIC_APP_URL=https://link.guidev.site
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
@@ -21,6 +23,68 @@ npm install
 npm run dev
 ```
 
+## Supabase Auth
+
+No Supabase, habilite **Authentication** com email/senha e confirmacao de email.
+
+URLs recomendadas em **Authentication > URL Configuration**:
+
+```txt
+Site URL:
+https://link.guidev.site
+
+Redirect URLs:
+https://link.guidev.site/auth/callback
+https://link.guidev.site/nova-senha
+http://localhost:3000/auth/callback
+http://localhost:3000/nova-senha
+```
+
+Para login social, habilite os providers em **Authentication > Providers**:
+
+```txt
+Google
+GitHub
+Discord
+```
+
+Cada provider precisa do client id/secret criado no console do proprio provider. Use a callback URL exibida pelo
+Supabase na tela de configuracao do provider.
+
+## Painel
+
+Rotas principais:
+
+```txt
+/login
+/cadastro
+/recuperar-senha
+/nova-senha
+/dashboard
+```
+
+Links criados no `/dashboard` ficam vinculados ao usuario autenticado. Links criados pela home ou pela API sem
+`Authorization` continuam publicos, mas nao aparecem em nenhum painel.
+
+O painel mostra:
+
+```txt
+- total de links
+- total de cliques
+- eventos rastreados
+- ranking por pais
+- ranking por origem/referrer
+- lista de links criados pelo usuario
+```
+
+As informacoes de localizacao dependem dos headers enviados pela hospedagem. Na Vercel, o app usa:
+
+```txt
+x-vercel-ip-country
+x-vercel-ip-country-region
+x-vercel-ip-city
+```
+
 ## API
 
 Base URL:
@@ -30,6 +94,7 @@ https://link.guidev.site
 ```
 
 Todos os endpoints recebem e retornam JSON. Nao precisa de login nem token.
+Quando o header `Authorization` e enviado, o link criado fica vinculado ao usuario autenticado.
 
 ### Criar link
 
@@ -56,6 +121,15 @@ Criar link customizado:
 ```bash
 curl -X POST https://link.guidev.site/api/links \
   -H "Content-Type: application/json" \
+  -d "{\"url\":\"https://guidev.site\",\"slug\":\"portfolio\"}"
+```
+
+Criar link autenticado para aparecer no dashboard:
+
+```bash
+curl -X POST https://link.guidev.site/api/links \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer SUPABASE_ACCESS_TOKEN" \
   -d "{\"url\":\"https://guidev.site\",\"slug\":\"portfolio\"}"
 ```
 
@@ -135,6 +209,31 @@ https://link.guidev.site/portfolio
 ```
 
 Cada acesso ao redirect chama a funcao `increment_link_clicks` no Supabase e incrementa o contador `clicks`.
+
+### Dashboard autenticado
+
+`GET /api/dashboard`
+
+```bash
+curl https://link.guidev.site/api/dashboard \
+  -H "Authorization: Bearer SUPABASE_ACCESS_TOKEN"
+```
+
+Resposta resumida:
+
+```json
+{
+  "summary": {
+    "links": 3,
+    "clicks": 42,
+    "trackedEvents": 42
+  },
+  "links": [],
+  "countries": [],
+  "referrers": [],
+  "recentEvents": []
+}
+```
 
 ## Deploy
 

@@ -45,6 +45,11 @@ async function apiNotFound(request: NextRequest, context: RouteContext) {
           method: "GET",
           path: "/api/links/{slug}",
           description: "Consulta um link existente pelo slug."
+        },
+        {
+          method: "GET",
+          path: "/api/dashboard",
+          description: "Lista metricas e links do usuario autenticado."
         }
       ]
     },
