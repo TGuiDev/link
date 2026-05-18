@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Nunito_Sans } from "next/font/google";
 import "./globals.css";
+
+const nunitoSans = Nunito_Sans({
+  subsets: ["latin"],
+  variable: "--font-rounded",
+  display: "swap"
+});
 
 export const metadata: Metadata = {
   title: "Link",
@@ -21,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body className={nunitoSans.variable}>{children}</body>
     </html>
   );
 }

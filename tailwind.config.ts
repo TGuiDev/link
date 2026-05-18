@@ -10,7 +10,15 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "Inter", "system-ui", "sans-serif"]
+        sans: [
+          "var(--font-rounded)",
+          "Nunito Sans",
+          "Avenir Next Rounded",
+          "Arial Rounded MT Bold",
+          "ui-rounded",
+          "system-ui",
+          "sans-serif"
+        ]
       },
       boxShadow: {
         glow: "0 18px 80px rgba(34, 197, 94, 0.22)"
