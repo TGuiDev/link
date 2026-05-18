@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f7f7f2;
+  --foreground: #172019;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(16, 185, 129, 0.28);
+}
