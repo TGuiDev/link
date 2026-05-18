@@ -15,7 +15,12 @@ export function AuthCallback() {
         const supabase = getSupabaseBrowser();
         const url = new URL(window.location.href);
         const code = url.searchParams.get("code");
-        const urlError = url.searchParams.get("error_description") ?? url.searchParams.get("error");
+        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+        const urlError =
+          url.searchParams.get("error_description") ??
+          url.searchParams.get("error") ??
+          hashParams.get("error_description") ??
+          hashParams.get("error");
 
         if (urlError) {
           setHasError(true);
