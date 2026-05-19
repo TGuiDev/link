@@ -16,8 +16,9 @@ export const metadata: Metadata = {
   description: "Crie links curtos randômicos ou personalizados, acompanhe métricas e use a API.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://link.guidev.site"),
   icons: {
-    icon: "/Dark_Theme_Logo.svg",
-    shortcut: "/Dark_Theme_Logo.svg"
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png"
   },
   robots: {
     index: true,
@@ -30,11 +31,11 @@ export const metadata: Metadata = {
     siteName: "Link",
     images: [
       {
-        url: "/logo.png",
-        width: 512,
-        height: 512,
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
         type: "image/png",
-        alt: "Logo do Link"
+        alt: "Link - encurtador de links"
       }
     ],
     locale: "pt_BR",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Link",
     description: "Crie links curtos randômicos ou personalizados, acompanhe métricas e use a API.",
-    images: ["/logo.png"]
+    images: ["/opengraph-image"]
   }
 };
 
