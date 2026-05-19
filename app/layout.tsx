@@ -30,11 +30,11 @@ export const metadata: Metadata = {
     siteName: "Link",
     images: [
       {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
+        url: "/logo.png",
+        width: 512,
+        height: 512,
         type: "image/png",
-        alt: "Link - encurtador de links"
+        alt: "Logo do Link"
       }
     ],
     locale: "pt_BR",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Link",
     description: "Crie links curtos randômicos ou personalizados, acompanhe métricas e use a API.",
-    images: ["/opengraph-image"]
+    images: ["/logo.png"]
   }
 };
 
