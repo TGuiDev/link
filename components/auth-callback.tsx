@@ -48,14 +48,14 @@ export function AuthCallback() {
 
         if (!data.session) {
           setHasError(true);
-          setMessage("Login confirmado, mas a sessao nao foi criada no navegador. Verifique as Redirect URLs do Supabase.");
+          setMessage("Login confirmado, mas a sessão não foi criada no navegador. Verifique as Redirect URLs do Supabase.");
           return;
         }
 
         window.location.replace("/dashboard");
       } catch (callbackError) {
         setHasError(true);
-        setMessage(callbackError instanceof Error ? callbackError.message : "Nao foi possivel concluir o login.");
+        setMessage(callbackError instanceof Error ? callbackError.message : "Não foi possível concluir o login.");
       }
     }
 

@@ -11,12 +11,12 @@ import { getSupabaseBrowser } from "@/lib/supabase-browser";
 type Theme = "light" | "dark";
 
 const sections = [
-  { id: "inicio", label: "Inicio" },
-  { id: "autenticacao", label: "Autenticacao" },
+  { id: "inicio", label: "Início" },
+  { id: "autenticacao", label: "Autenticação" },
   { id: "criar-link", label: "Criar link" },
   { id: "consultar-link", label: "Consultar link" },
   { id: "dashboard", label: "Dashboard" },
-  { id: "stats", label: "Stats publicas" },
+  { id: "stats", label: "Stats públicas" },
   { id: "redirect", label: "Redirect" },
   { id: "erros", label: "Erros" }
 ];
@@ -215,7 +215,7 @@ export function Documentation() {
                   Documenta&ccedil;&atilde;o da API Link
                 </h1>
                 <p className="mt-4 max-w-3xl text-base font-medium leading-7 text-zinc-600 dark:text-zinc-300">
-                  Use a API para criar links curtos, consultar links existentes e ler metricas da sua conta. A chave fica no dashboard.
+                  Use a API para criar links curtos, consultar links existentes e ler métricas da sua conta. A chave fica no dashboard.
                 </p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   <Info label="Base URL" value={baseUrl} />
@@ -224,9 +224,9 @@ export function Documentation() {
                 </div>
               </section>
 
-              <DocSection id="autenticacao" eyebrow="Auth" title="Autenticacao">
+              <DocSection id="autenticacao" eyebrow="Auth" title="Autenticação">
                 <p>
-                  As integracoes devem enviar a API key gerada no dashboard. A chave pode ir em `X-API-Key` ou no header `Authorization` como Bearer.
+                  As integrações devem enviar a API key gerada no dashboard. A chave pode ir em `X-API-Key` ou no header `Authorization` como Bearer.
                 </p>
                 <CodeBlock
                   copied={copied}
@@ -235,18 +235,18 @@ export function Documentation() {
   -H "X-API-Key: link_sua_api_key"`}
                 />
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 dark:border-amber-400/20 dark:bg-amber-950/20 dark:text-amber-100">
-                  Guarde sua chave como segredo. Links criados com a API key ficam vinculados a sua conta e aparecem no dashboard.
+                  Guarde sua chave como segredo. Links criados com a API key ficam vinculados à sua conta e aparecem no dashboard.
                 </div>
               </DocSection>
 
               <DocSection id="criar-link" eyebrow="POST" title="/api/links">
-                <p>Cria um link curto randomico ou customizado.</p>
+                <p>Cria um link curto randômico ou customizado.</p>
                 <Endpoint method="POST" path="/api/links" auth="API key recomendada" />
                 <FieldTable
                   rows={[
-                    ["url", "string", "Sim", "URL original. Se nao tiver protocolo, assume https://."],
-                    ["slug", "string", "Nao", "Slug customizado com 3 a 48 caracteres: letras, numeros, _ ou -."],
-                    ["customSlug", "string", "Nao", "Alias de slug para clientes que preferem esse nome."]
+                    ["url", "string", "Sim", "URL original. Se não tiver protocolo, assume https://."],
+                    ["slug", "string", "Não", "Slug customizado com 3 a 48 caracteres: letras, números, _ ou -."],
+                    ["customSlug", "string", "Não", "Alias de slug para clientes que preferem esse nome."]
                   ]}
                 />
                 <CodeBlock
@@ -271,8 +271,8 @@ export function Documentation() {
               </DocSection>
 
               <DocSection id="consultar-link" eyebrow="GET" title="/api/links/{slug}">
-                <p>Consulta os dados publicos de um link pelo slug.</p>
-                <Endpoint method="GET" path="/api/links/{slug}" auth="Publico" />
+                <p>Consulta os dados públicos de um link pelo slug.</p>
+                <Endpoint method="GET" path="/api/links/{slug}" auth="Público" />
                 <CodeBlock copied={copied} onCopy={copy} value={`curl ${baseUrl}/api/links/portfolio`} />
                 <JsonBlock
                   copied={copied}
@@ -288,8 +288,8 @@ export function Documentation() {
               </DocSection>
 
               <DocSection id="dashboard" eyebrow="GET" title="/api/dashboard">
-                <p>Retorna resumo, links, rankings de origem/localizacao e os eventos recentes do usuario autenticado.</p>
-                <Endpoint method="GET" path="/api/dashboard" auth="API key obrigatoria" />
+                <p>Retorna resumo, links, rankings de origem/localização e os eventos recentes do usuário autenticado.</p>
+                <Endpoint method="GET" path="/api/dashboard" auth="API key obrigatória" />
                 <CodeBlock
                   copied={copied}
                   onCopy={copy}
@@ -314,28 +314,28 @@ export function Documentation() {
               </DocSection>
 
               <DocSection id="stats" eyebrow="GET" title="/api/stats">
-                <p>Retorna a contagem global de links criados. Este endpoint e publico e tem cache curto.</p>
-                <Endpoint method="GET" path="/api/stats" auth="Publico" />
+                <p>Retorna a contagem global de links criados. Este endpoint é público e tem cache curto.</p>
+                <Endpoint method="GET" path="/api/stats" auth="Público" />
                 <JsonBlock copied={copied} onCopy={copy} value={`{ "links": 128 }`} />
               </DocSection>
 
               <DocSection id="redirect" eyebrow="GET" title="/{slug}">
-                <p>Abre o link encurtado, registra o evento quando possivel e redireciona para a URL original.</p>
-                <Endpoint method="GET" path="/portfolio" auth="Publico" />
+                <p>Abre o link encurtado, registra o evento quando possível e redireciona para a URL original.</p>
+                <Endpoint method="GET" path="/portfolio" auth="Público" />
                 <p>
-                  O redirect incrementa `clicks` e tenta salvar pais, regiao, cidade, referrer e user agent com base nos headers da hospedagem.
+                  O redirect incrementa `clicks` e tenta salvar país, região, cidade, referrer e user agent com base nos headers da hospedagem.
                 </p>
               </DocSection>
 
               <DocSection id="erros" eyebrow="Reference" title="Erros e limites">
                 <StatusTable
                   rows={[
-                    ["400", "URL invalida ou slug fora do formato aceito."],
-                    ["401", "API key ausente, invalida ou usuario nao autenticado."],
-                    ["404", "Link ou endpoint nao encontrado."],
-                    ["409", "Slug customizado ja esta em uso."],
+                    ["400", "URL inválida ou slug fora do formato aceito."],
+                    ["401", "API key ausente, inválida ou usuário não autenticado."],
+                    ["404", "Link ou endpoint não encontrado."],
+                    ["409", "Slug customizado já está em uso."],
                     ["500", "Erro inesperado no servidor ou no Supabase."],
-                    ["503", "Nao foi possivel gerar um slug randomico unico."]
+                    ["503", "Não foi possível gerar um slug randômico único."]
                   ]}
                 />
               </DocSection>
@@ -424,8 +424,8 @@ function FieldTable({ rows }: { rows: string[][] }) {
           <tr>
             <th className="px-4 py-3">Campo</th>
             <th className="px-4 py-3">Tipo</th>
-            <th className="px-4 py-3">Obrigatorio</th>
-            <th className="px-4 py-3">Descricao</th>
+            <th className="px-4 py-3">Obrigatório</th>
+            <th className="px-4 py-3">Descrição</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-white/10">

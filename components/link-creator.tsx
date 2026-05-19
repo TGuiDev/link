@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, Check, ChevronDown, Copy, Download, LayoutDashboard, LinkIcon, Loader2, LockKeyhole, LogOut, Moon, QrCode, Sun, Wand2 } from "lucide-react";
+import { ChainBackdrop3D } from "@/components/chain-backdrop-3d";
 import { clearCachedNavbarUser, getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { createQrCodeUrl } from "@/lib/qrcode";
@@ -32,14 +33,8 @@ export function LinkCreator() {
   const [url, setUrl] = useState("");
   const [slug, setSlug] = useState("");
   const [mode, setMode] = useState<Mode>("random");
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-
-    const savedTheme = window.localStorage.getItem("link-theme");
-    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
-
-    return "dark";
-  });
+  const [theme, setTheme] = useState<Theme>("dark");
+  const [isThemeHydrated, setIsThemeHydrated] = useState(false);
   const [createdLink, setCreatedLink] = useState<ShortenedLink | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +45,17 @@ export function LinkCreator() {
   const [targetLinksCount, setTargetLinksCount] = useState<number | null>(null);
   const [displayedLinksCount, setDisplayedLinksCount] = useState(0);
   const displayedLinksCountRef = useRef(0);
+
+  // Sincronizar tema do localStorage após hidratação
+  useEffect(() => {
+    window.setTimeout(() => {
+      const savedTheme = window.localStorage.getItem("link-theme");
+      if (savedTheme === "dark" || savedTheme === "light") {
+        setTheme(savedTheme);
+      }
+      setIsThemeHydrated(true);
+    }, 0);
+  }, []);
 
   const canSubmit = useMemo(() => {
     return url.trim().length > 3 && (mode === "random" || slug.trim().length >= 3);
@@ -174,7 +180,7 @@ export function LinkCreator() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Nao foi possivel encurtar o link.");
+        throw new Error(data.error ?? "Não foi possível encurtar o link.");
       }
 
       setCreatedLink(data);
@@ -206,19 +212,22 @@ export function LinkCreator() {
   }
 
   return (
-    <main className={theme === "dark" ? "dark" : ""}>
-      <section className="min-h-screen bg-zinc-50 text-zinc-950 transition-colors duration-200 ease-out dark:bg-zinc-950 dark:text-white">
-        <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 md:px-8">
+    <main className={theme === "dark" ? "dark" : ""} suppressHydrationWarning>
+      <section className="relative min-h-screen overflow-hidden bg-zinc-50 text-zinc-950 transition-colors duration-200 ease-out dark:bg-zinc-950 dark:text-white">
+        <ChainBackdrop3D theme={theme} />
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 md:px-8">
           <header className="flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3">
-              <Image
-                className="h-10 w-10 rounded-lg object-contain"
-                src={theme === "dark" ? "/Dark_Theme_Logo.svg" : "/Light_Theme_Logo.svg"}
-                alt="Link"
-                width={40}
-                height={40}
-                loading="eager"
-              />
+              {isThemeHydrated && (
+                <Image
+                  className="h-10 w-10 rounded-lg object-contain"
+                  src={theme === "dark" ? "/Dark_Theme_Logo.svg" : "/Light_Theme_Logo.svg"}
+                  alt="Link"
+                  width={40}
+                  height={40}
+                  loading="eager"
+                />
+              )}
               <div>
                 <p className="text-xl font-black">Link</p>
                 <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">link.guidev.site</p>
@@ -299,7 +308,7 @@ export function LinkCreator() {
                 aria-label="Alternar tema"
                 title="Alternar tema"
               >
-                {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+                {isThemeHydrated && (theme === "dark" ? <Sun size={17} /> : <Moon size={17} />)}
               </button>
             </div>
           </header>
@@ -315,7 +324,7 @@ export function LinkCreator() {
               </p>
 
               <div className="mt-8 grid gap-3 text-sm font-bold text-zinc-600 sm:grid-cols-3 dark:text-zinc-300">
-                {["Sem login", "Slug custom", "Metricas"].map((item) => (
+                {["Sem login", "Slug custom", "Métricas"].map((item) => (
                   <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-zinc-900" key={item}>
                     {item}
                   </div>
@@ -412,7 +421,7 @@ export function LinkCreator() {
                         QR Code
                       </div>
                       <p className="mt-2 text-sm font-medium leading-6 text-zinc-600 dark:text-zinc-300">
-                        Compartilhe o link tambem como imagem escaneavel.
+                        Compartilhe o link também como imagem escaneável.
                       </p>
                       <a
                         className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-950 px-3 text-xs font-black text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"

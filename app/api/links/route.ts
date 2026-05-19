@@ -28,11 +28,11 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (error?.code === "23505") {
-        return NextResponse.json({ error: "Esse link customizado ja esta em uso." }, { status: 409 });
+        return NextResponse.json({ error: "Esse link customizado já está em uso." }, { status: 409 });
       }
 
       if (error || !data) {
-        throw error ?? new Error("Nao foi possivel criar o link.");
+        throw error ?? new Error("Não foi possível criar o link.");
       }
 
       return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), id: data.id }, { status: 201 });
@@ -51,13 +51,13 @@ export async function POST(request: NextRequest) {
       }
 
       if (error || !data) {
-        throw error ?? new Error("Nao foi possivel criar o link.");
+        throw error ?? new Error("Não foi possível criar o link.");
       }
 
       return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), id: data.id }, { status: 201 });
     }
 
-    return NextResponse.json({ error: "Nao foi possivel gerar um link unico. Tente novamente." }, { status: 503 });
+    return NextResponse.json({ error: "Não foi possível gerar um link único. Tente novamente." }, { status: 503 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado.";
     const status = message.includes("Invalid URL") || message.includes("URL") || message.includes("link customizado") ? 400 : 500;

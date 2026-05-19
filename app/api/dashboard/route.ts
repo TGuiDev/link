@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser(request);
 
   if (!user) {
-    return NextResponse.json({ error: "Nao autenticado." }, { status: 401 });
+    return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
   const supabase = getSupabaseAdmin();

@@ -91,7 +91,7 @@ export function AuthCard({ mode }: AuthCardProps) {
         });
         if (signupError) throw signupError;
         setCanResendConfirmation(true);
-        setMessage("Cadastro criado. Confira seu email para confirmar a conta. Veja tambem spam e promocoes.");
+        setMessage("Cadastro criado. Confira seu email para confirmar a conta. Veja também spam e promoções.");
         return;
       }
 
@@ -111,7 +111,7 @@ export function AuthCard({ mode }: AuthCardProps) {
         window.location.href = "/dashboard";
       }, 900);
     } catch (authError) {
-      setError(authError instanceof Error ? authError.message : "Nao foi possivel concluir a acao.");
+      setError(authError instanceof Error ? authError.message : "Não foi possível concluir a ação.");
     } finally {
       setIsLoading(false);
     }
@@ -152,9 +152,9 @@ export function AuthCard({ mode }: AuthCardProps) {
 
       if (resendError) throw resendError;
       setCanResendConfirmation(true);
-      setMessage("Email de confirmacao reenviado. Confira sua caixa de entrada e spam.");
+      setMessage("Email de confirmação reenviado. Confira sua caixa de entrada e spam.");
     } catch (resendError) {
-      setError(resendError instanceof Error ? resendError.message : "Nao foi possivel reenviar a confirmacao.");
+      setError(resendError instanceof Error ? resendError.message : "Não foi possível reenviar a confirmação.");
     } finally {
       setIsLoading(false);
     }
@@ -279,7 +279,7 @@ export function AuthCard({ mode }: AuthCardProps) {
                 onClick={resendConfirmation}
                 type="button"
               >
-                Reenviar email de confirmacao
+                Reenviar email de confirmação
               </button>
             ) : null}
           </form>

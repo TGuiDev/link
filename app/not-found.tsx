@@ -17,7 +17,7 @@ export default function NotFound() {
             Esse link não foi encontrado.
           </h1>
           <p className="mt-4 max-w-xl text-lg font-medium leading-8 text-zinc-400">
-            O endereco pode ter sido digitado errado, removido ou ainda nao foi criado no Link.
+            O endereço pode ter sido digitado errado, removido ou ainda não foi criado no Link.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row lg:justify-start">
@@ -26,7 +26,7 @@ export default function NotFound() {
               className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-white px-5 text-sm font-black text-zinc-950 transition hover:bg-zinc-200"
             >
               <Home size={18} />
-              Voltar ao inicio
+              Voltar ao início
             </Link>
             <Link
               href="/"

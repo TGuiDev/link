@@ -301,7 +301,7 @@ export function Dashboard() {
     const payload = await response.json();
 
     if (!response.ok) {
-      setError(payload.error ?? "Nao foi possivel carregar o painel.");
+      setError(payload.error ?? "Não foi possível carregar o painel.");
       if (!options?.silent) {
         setIsLoading(false);
       }
@@ -344,7 +344,7 @@ export function Dashboard() {
     setIsCreating(false);
 
     if (!response.ok) {
-      setError(payload.error ?? "Nao foi possivel criar o link.");
+      setError(payload.error ?? "Não foi possível criar o link.");
       return;
     }
 
@@ -611,7 +611,7 @@ export function Dashboard() {
                         ))
                       ) : (
                         <p className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 px-3 py-5 text-sm font-medium text-zinc-500 dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-400">
-                          Ainda nao ha eventos rastreados.
+                          Ainda não há eventos rastreados.
                         </p>
                       )}
                     </div>
@@ -733,7 +733,7 @@ export function Dashboard() {
                     ) : (
                       <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center dark:border-white/10 dark:bg-zinc-950">
                         <Wand2 className="mx-auto mb-3 text-zinc-500 dark:text-zinc-400" />
-                        <p className="text-sm font-black">{search ? "Nenhum link encontrado para essa busca." : "Crie seu primeiro link para ver metricas aqui."}</p>
+                        <p className="text-sm font-black">{search ? "Nenhum link encontrado para essa busca." : "Crie seu primeiro link para ver métricas aqui."}</p>
                       </div>
                     )}
                   </div>
@@ -749,7 +749,7 @@ export function Dashboard() {
                     API key
                   </div>
                   <p className="max-w-2xl text-sm font-medium leading-6 text-zinc-500 dark:text-zinc-400">
-                    Use esta chave para criar links e consultar metricas pela API. Ela representa sua conta, então trate como segredo.
+                    Use esta chave para criar links e consultar métricas pela API. Ela representa sua conta, então trate como segredo.
                   </p>
                   <div className="mt-5 flex min-w-0 flex-col gap-2 sm:flex-row">
                     <input className="h-12 min-w-0 flex-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 font-mono text-xs font-bold text-zinc-700 outline-none dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-200" readOnly value={data?.apiKey ?? ""} />
@@ -780,7 +780,7 @@ export function Dashboard() {
                   </div>
                   <Link className="mt-4 flex h-10 items-center justify-center gap-2 rounded-lg border border-zinc-200 px-3 text-xs font-black text-zinc-600 transition hover:border-zinc-400 hover:text-zinc-950 dark:border-white/10 dark:text-zinc-300 dark:hover:border-white/30 dark:hover:text-white" href="/documentacao">
                     <BookOpen size={15} />
-                    Abrir documentacao
+                    Abrir documentação
                   </Link>
                 </div>
               </div>
@@ -1220,47 +1220,69 @@ function AccountSetting({
 
 function DashboardSkeleton() {
   return (
-    <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
-      <div className="space-y-5">
-        <div className={card}>
-          <div className="h-7 w-32 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-          <div className="mt-3 h-4 w-64 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-          <div className="mt-6 space-y-4">
-            <div className="h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-            <div className="h-20 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-            <div className="h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-          </div>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+    <div className="space-y-5">
+      <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-zinc-900">
+        <div className="h-4 w-24 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+        <div className="mt-3 h-10 w-48 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+        <div className="mt-2 h-4 w-96 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {[0, 1, 2].map((item) => (
-            <div className={card} key={item}>
-              <div className="h-9 w-9 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-              <div className="mt-4 h-8 w-20 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-              <div className="mt-2 h-4 w-24 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-            </div>
+            <div className="h-20 rounded-xl bg-zinc-100 dark:bg-zinc-800" key={item} />
           ))}
         </div>
       </div>
-      <div className="space-y-5">
-        <div className="grid gap-5 md:grid-cols-2">
-          {[0, 1].map((item) => (
-            <div className={card} key={item}>
-              <div className="h-6 w-28 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-              <div className="mt-5 space-y-3">
-                <div className="h-5 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-                <div className="h-5 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-                <div className="h-5 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+
+      <div className="grid gap-2 rounded-xl border border-zinc-200 bg-white p-2 shadow-sm dark:border-white/10 dark:bg-zinc-900 sm:grid-cols-4">
+        {[0, 1, 2, 3].map((item) => (
+          <div className="h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800" key={item} />
+        ))}
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-5">
+          <div className="grid gap-5 md:grid-cols-2">
+            {[0, 1].map((item) => (
+              <div className={card} key={item}>
+                <div className="h-6 w-32 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                <div className="mt-5 space-y-3">
+                  <div className="h-5 w-full rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div className="h-5 w-4/5 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                  <div className="h-5 w-3/4 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-        <div className={card}>
-          <div className="h-7 w-28 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-          <div className="mt-4 h-11 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
-          <div className="mt-4 space-y-3">
-            <div className="h-20 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
-            <div className="h-20 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+            ))}
           </div>
+
+          <div className={card}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <div className="h-4 w-24 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                <div className="mt-2 h-6 w-32 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+              </div>
+              <div className="h-6 w-16 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+            </div>
+            <div className="mt-4 space-y-2">
+              {[0, 1, 2].map((item) => (
+                <div className="h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800" key={item} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className={card}>
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 rounded bg-zinc-100 dark:bg-zinc-800" />
+            <div className="h-6 w-24 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+          </div>
+          <div className="mt-4 space-y-3">
+            {[0, 1, 2].map((item) => (
+              <div key={item}>
+                <div className="h-3 w-20 rounded bg-zinc-100 dark:bg-zinc-800" />
+                <div className="mt-1 h-5 w-16 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 h-10 w-full rounded-lg bg-zinc-100 dark:bg-zinc-800" />
         </div>
       </div>
     </div>

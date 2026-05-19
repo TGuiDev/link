@@ -50,7 +50,7 @@ function notFoundHtml(slug: string) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Link nao encontrado | Link</title>
+    <title>Link não encontrado | Link</title>
     <style>
       * { box-sizing: border-box; }
       body {
@@ -209,10 +209,10 @@ function notFoundHtml(slug: string) {
         <div class="copy">
           <p class="eyebrow">404</p>
           <h1>Esse link não foi encontrado.</h1>
-          <p>O endereco pode ter sido digitado errado, removido ou ainda nao foi criado no Link.</p>
+          <p>O endereço pode ter sido digitado errado, removido ou ainda não foi criado no Link.</p>
           <span class="slug">link.guidev.site/${safeSlug}</span>
           <div class="actions">
-            <a href="/">Voltar ao inicio</a>
+            <a href="/">Voltar ao início</a>
           </div>
         </div>
       </section>

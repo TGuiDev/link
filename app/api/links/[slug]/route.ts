@@ -20,7 +20,7 @@ export async function GET(_request: Request, context: RouteContext) {
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: "Link nao encontrado." }, { status: 404 });
+      return NextResponse.json({ error: "Link não encontrado." }, { status: 404 });
     }
 
     return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), createdAt: data.created_at });

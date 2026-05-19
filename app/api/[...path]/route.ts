@@ -32,14 +32,14 @@ async function apiNotFound(request: NextRequest, context: RouteContext) {
 
   return NextResponse.json(
     {
-      error: "Endpoint nao encontrado.",
+      error: "Endpoint não encontrado.",
       path: requestedPath,
       method: request.method,
       availableEndpoints: [
         {
           method: "POST",
           path: "/api/links",
-          description: "Cria um link curto randomico ou customizado."
+          description: "Cria um link curto randômico ou customizado."
         },
         {
           method: "GET",
@@ -49,12 +49,12 @@ async function apiNotFound(request: NextRequest, context: RouteContext) {
         {
           method: "GET",
           path: "/api/dashboard",
-          description: "Lista metricas e links do usuario autenticado."
+          description: "Lista métricas e links do usuário autenticado."
         },
         {
           method: "GET",
           path: "/api/stats",
-          description: "Consulta o total publico de links criados."
+          description: "Consulta o total público de links criados."
         }
       ]
     },
