@@ -18,23 +18,66 @@ export default function OpenGraphImage() {
           background: "#05110d",
           display: "flex",
           height: "100%",
-          justifyContent: "center",
-          padding: 40,
+          justifyContent: "space-between",
+          padding: 56,
           width: "100%"
         }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          alt={alt}
-          src={`${baseUrl}/meta_banner/link.png`}
+        <div
           style={{
-            height: "auto",
-            maxHeight: 550,
-            maxWidth: 1120,
-            objectFit: "contain",
-            width: "100%"
+            alignItems: "center",
+            background: "#ffffff",
+            borderRadius: 48,
+            display: "flex",
+            height: 360,
+            justifyContent: "center",
+            width: 360
           }}
-        />
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt="Link"
+            src={`${baseUrl}/Dark_Theme_Logo.svg`}
+            style={{
+              height: 250,
+              objectFit: "contain",
+              width: 250
+            }}
+          />
+        </div>
+
+        <div
+          style={{
+            alignItems: "flex-start",
+            display: "flex",
+            flexDirection: "column",
+            gap: 26,
+            justifyContent: "center",
+            width: 650
+          }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt={alt}
+            src={`${baseUrl}/meta_banner/link.png`}
+            style={{
+              height: "auto",
+              maxHeight: 220,
+              objectFit: "contain",
+              width: 650
+            }}
+          />
+          <div
+            style={{
+              color: "#d1fae5",
+              fontSize: 34,
+              fontWeight: 800,
+              lineHeight: 1.25
+            }}
+          >
+            Links curtos, metricas e API em um unico lugar.
+          </div>
+        </div>
       </div>
     ),
     size
