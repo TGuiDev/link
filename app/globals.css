@@ -37,3 +37,42 @@ input {
 ::selection {
   background: rgba(16, 185, 129, 0.28);
 }
+
+.doc-page::-webkit-scrollbar,
+.doc-page *::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.doc-page::-webkit-scrollbar-track,
+.doc-page *::-webkit-scrollbar-track {
+  background: #fafafa;
+}
+
+.doc-page::-webkit-scrollbar-thumb,
+.doc-page *::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 2px solid #fafafa;
+  border-radius: 999px;
+}
+
+.doc-page::-webkit-scrollbar-thumb:hover,
+.doc-page *::-webkit-scrollbar-thumb:hover {
+  background: #e4e4e7;
+}
+
+.dark .doc-page::-webkit-scrollbar-track,
+.dark .doc-page *::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+.dark .doc-page::-webkit-scrollbar-thumb,
+.dark .doc-page *::-webkit-scrollbar-thumb {
+  background: #000000;
+  border-color: #09090b;
+}
+
+.dark .doc-page::-webkit-scrollbar-thumb:hover,
+.dark .doc-page *::-webkit-scrollbar-thumb:hover {
+  background: #18181b;
+}

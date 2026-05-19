@@ -5,6 +5,7 @@ const RESERVED_SLUGS = new Set([
   "auth",
   "cadastro",
   "dashboard",
+  "documentacao",
   "favicon.ico",
   "login",
   "nova-senha",

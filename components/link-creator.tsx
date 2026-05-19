@@ -4,7 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Copy, Download, LayoutDashboard, LinkIcon, Loader2, LockKeyhole, LogOut, Moon, QrCode, Sun, Wand2 } from "lucide-react";
+import { BookOpen, Check, ChevronDown, Copy, Download, LayoutDashboard, LinkIcon, Loader2, LockKeyhole, LogOut, Moon, QrCode, Sun, Wand2 } from "lucide-react";
+import { clearCachedNavbarUser, getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { createQrCodeUrl } from "@/lib/qrcode";
 
@@ -17,11 +18,6 @@ type ShortenedLink = {
 
 type Mode = "random" | "custom";
 type Theme = "light" | "dark";
-type NavbarUser = {
-  email: string;
-  name: string;
-  avatarUrl: string | null;
-};
 type PublicStats = {
   links: number;
 };
@@ -32,6 +28,7 @@ const input =
   "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-zinc-950 outline-none transition-colors duration-200 ease-out focus:border-zinc-950 focus:ring-4 focus:ring-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-300 dark:focus:ring-emerald-300/10";
 
 export function LinkCreator() {
+  const cachedNavbarUser = getCachedNavbarUser();
   const [url, setUrl] = useState("");
   const [slug, setSlug] = useState("");
   const [mode, setMode] = useState<Mode>("random");
@@ -47,8 +44,8 @@ export function LinkCreator() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [navbarUser, setNavbarUser] = useState<NavbarUser | null>(null);
-  const [isCheckingUser, setIsCheckingUser] = useState(true);
+  const [navbarUser, setNavbarUser] = useState<NavbarUser | null>(cachedNavbarUser ?? null);
+  const [isCheckingUser, setIsCheckingUser] = useState(cachedNavbarUser === undefined);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [targetLinksCount, setTargetLinksCount] = useState<number | null>(null);
   const [displayedLinksCount, setDisplayedLinksCount] = useState(0);
@@ -69,37 +66,24 @@ export function LinkCreator() {
   }, [createdLink, theme]);
 
   useEffect(() => {
-    async function loadUser() {
-      try {
-        const supabase = getSupabaseBrowser();
-        const { data } = await supabase.auth.getUser();
-        const user = data.user;
-
-        if (!user) {
-          setNavbarUser(null);
+    if (cachedNavbarUser !== undefined) {
+      setIsCheckingUser(false);
+    } else {
+      loadNavbarUser()
+        .then((user) => {
+          setNavbarUser(user);
+        })
+        .finally(() => {
           setIsCheckingUser(false);
-          return;
-        }
-
-        setNavbarUser({
-          email: user.email ?? "",
-          name: user.user_metadata?.name ?? user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Usuario",
-          avatarUrl: user.user_metadata?.avatar_url ?? null
         });
-      } catch {
-        setNavbarUser(null);
-      } finally {
-        setIsCheckingUser(false);
-      }
     }
 
-    loadUser();
     fetchPublicStats().then((nextStats) => {
       if (nextStats) {
         setTargetLinksCount(nextStats.links);
       }
     });
-  }, []);
+  }, [cachedNavbarUser]);
 
   useEffect(() => {
     const supabase = getSupabaseBrowser();
@@ -218,6 +202,7 @@ export function LinkCreator() {
   async function signOut() {
     const supabase = getSupabaseBrowser();
     await supabase.auth.signOut();
+    clearCachedNavbarUser();
     setNavbarUser(null);
     setIsMenuOpen(false);
   }
@@ -225,7 +210,7 @@ export function LinkCreator() {
   return (
     <main className={theme === "dark" ? "dark" : ""}>
       <section className="min-h-screen bg-zinc-50 text-zinc-950 transition-colors duration-200 ease-out dark:bg-zinc-950 dark:text-white">
-        <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-6 md:px-8">
+        <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 md:px-8">
           <header className="flex items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3">
               <Image
@@ -243,6 +228,13 @@ export function LinkCreator() {
             </Link>
 
             <div className="flex items-center gap-2">
+              <Link
+                className="hidden h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-bold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-white/30 md:inline-flex"
+                href="/documentacao"
+              >
+                <BookOpen size={15} />
+                Documenta&ccedil;&atilde;o
+              </Link>
               {isCheckingUser ? (
                 <div className="flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 pr-3 dark:border-white/10 dark:bg-zinc-900">
                   <span className="h-7 w-7 rounded-full bg-zinc-100 dark:bg-zinc-800" />
@@ -275,6 +267,13 @@ export function LinkCreator() {
                       >
                         <LayoutDashboard size={15} />
                         Dashboard
+                      </Link>
+                      <Link
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        href="/documentacao"
+                      >
+                        <BookOpen size={15} />
+                        Documenta&ccedil;&atilde;o
                       </Link>
                       <button
                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"

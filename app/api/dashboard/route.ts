@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createApiKeyForUser } from "@/lib/api-keys";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getPublicBaseUrl, toLinkResponse } from "@/lib/links";
 import { getSupabaseAdmin } from "@/lib/supabase";
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
       id: user.id,
       email: user.email
     },
+    apiKey: createApiKeyForUser(user.id),
     summary: {
       links: linkRows.length,
       clicks: totalClicks,
