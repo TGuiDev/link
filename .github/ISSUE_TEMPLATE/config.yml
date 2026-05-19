@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentação
+    url: https://link.guidev.site/documentacao
+    about: Consulte a documentação da API antes de abrir uma issue.

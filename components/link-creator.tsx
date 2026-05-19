@@ -66,9 +66,7 @@ export function LinkCreator() {
   }, [createdLink, theme]);
 
   useEffect(() => {
-    if (cachedNavbarUser !== undefined) {
-      setIsCheckingUser(false);
-    } else {
+    if (cachedNavbarUser === undefined) {
       loadNavbarUser()
         .then((user) => {
           setNavbarUser(user);

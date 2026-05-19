@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublicBaseUrl, toLinkResponse } from "@/lib/links";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 type RouteContext = {
   params: Promise<{

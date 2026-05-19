@@ -1,83 +1,111 @@
 # Link
 
-Encurtador de links sem login feito com Next.js, Tailwind e Supabase.
+Encurtador de links feito com Next.js, Supabase e Tailwind CSS. O projeto inclui criação de links curtos, slugs customizados, dashboard autenticado, métricas, API com chave, documentação e QR Codes customizáveis.
 
-## Setup
+![Link preview](public/meta-banner/link.png)
 
-1. Crie um projeto no Supabase.
-2. Rode o SQL em `database/schema.sql` no SQL Editor.
-3. Crie `.env.local` com:
+## Recursos
+
+- Links curtos randômicos ou personalizados
+- Criação pública pela home
+- Dashboard autenticado para gerenciar links
+- Contagem de cliques e eventos recentes
+- Rankings por localidade e origem/referrer
+- API key por usuário
+- Documentação visual em `/documentacao`
+- QR Code com presets, logo central, texto, moldura e download em PNG
+- Metadata Open Graph/Twitter para previews sociais
+- Supabase Auth com email/senha e providers sociais
+
+## Stack
+
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+- Supabase Auth, Database e Realtime
+- lucide-react
+
+## Rodando Localmente
+
+Clone o projeto e instale as dependências:
 
 ```bash
-NEXT_PUBLIC_APP_URL=https://link.guidev.site
+git clone https://github.com/seu-usuario/link.git
+cd link
+npm install
+```
+
+Crie um projeto no Supabase e execute o SQL em [database/schema.sql](database/schema.sql) pelo SQL Editor.
+
+Depois crie um arquivo `.env.local`:
+
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+API_KEY_SECRET=use-a-long-random-secret
 ```
 
-4. Instale e rode:
+Inicie o servidor:
 
 ```bash
-npm install
 npm run dev
 ```
 
-## Supabase Auth
+Acesse:
 
-No Supabase, habilite **Authentication** com email/senha e confirmacao de email.
+```txt
+http://localhost:3000
+```
 
-URLs recomendadas em **Authentication > URL Configuration**:
+## Configurando o Supabase
+
+No Supabase, habilite Authentication com email/senha. Em desenvolvimento, configure:
 
 ```txt
 Site URL:
-https://link.guidev.site
+http://localhost:3000
 
 Redirect URLs:
-https://link.guidev.site/auth/callback
-https://link.guidev.site/nova-senha
 http://localhost:3000/auth/callback
 http://localhost:3000/nova-senha
 ```
 
-Para login social, habilite os providers em **Authentication > Providers**:
+Em produção, adicione também:
 
 ```txt
-Google
-GitHub
-Discord
+https://seu-dominio.com/auth/callback
+https://seu-dominio.com/nova-senha
 ```
 
-Cada provider precisa do client id/secret criado no console do proprio provider. Use a callback URL exibida pelo
-Supabase na tela de configuracao do provider.
+Para login social, habilite os providers desejados em Authentication > Providers. O app já funciona com o fluxo do Supabase; cada provider precisa do client id/secret criado no console correspondente.
 
-## Painel
-
-Rotas principais:
+## Rotas
 
 ```txt
-/login
-/cadastro
-/recuperar-senha
-/nova-senha
-/dashboard
+/                       Home para criar links
+/login                  Login
+/cadastro               Cadastro
+/recuperar-senha        Recuperação de senha
+/nova-senha             Definição de nova senha
+/dashboard              Dashboard autenticado
+/documentacao           Documentação da API
+/{slug}                 Redirect do link curto
 ```
 
-Links criados no `/dashboard` ficam vinculados ao usuario autenticado. Links criados pela home ou pela API sem
-`Authorization` continuam publicos, mas nao aparecem em nenhum painel.
+## Dashboard
 
-O painel mostra:
+Links criados no dashboard ficam vinculados ao usuário autenticado. O painel possui seções para:
 
-```txt
-- total de links
-- total de cliques
-- eventos rastreados
-- ranking por pais
-- ranking por origem/referrer
-- lista de links criados pelo usuario
-```
+- Visão geral
+- Links
+- API
+- Conta
 
-As informacoes de localizacao dependem dos headers enviados pela hospedagem. Na Vercel, o app usa:
+As métricas de localização dependem dos headers enviados pela hospedagem. Na Vercel, o app lê:
 
 ```txt
 x-vercel-ip-country
@@ -87,74 +115,62 @@ x-vercel-ip-city
 
 ## API
 
-Base URL:
+Base URL em produção:
 
 ```txt
 https://link.guidev.site
 ```
 
-Todos os endpoints recebem e retornam JSON. Nao precisa de login nem token.
-Quando o header `Authorization` e enviado, o link criado fica vinculado ao usuario autenticado.
+Em desenvolvimento:
 
-### Criar link
+```txt
+http://localhost:3000
+```
 
-`POST /api/links`
+### Autenticação
+
+Alguns endpoints podem ser usados publicamente, mas integrações devem usar a API key disponível no dashboard.
+
+Headers aceitos:
+
+```txt
+X-API-Key: link_sua_api_key
+```
+
+ou:
+
+```txt
+Authorization: Bearer link_sua_api_key
+```
+
+### Criar Link
+
+```txt
+POST /api/links
+```
 
 Body:
 
-| Campo | Tipo | Obrigatorio | Descricao |
+| Campo | Tipo | Obrigatório | Descrição |
 | --- | --- | --- | --- |
-| `url` | `string` | Sim | URL original. Se nao tiver protocolo, o sistema assume `https://`. |
-| `slug` | `string` | Nao | Slug customizado com 3 a 48 caracteres. Aceita letras, numeros, `_` e `-`. |
-| `customSlug` | `string` | Nao | Alternativa para `slug`, caso prefira esse nome no payload. |
+| `url` | `string` | Sim | URL original. Se não tiver protocolo, assume `https://`. |
+| `slug` | `string` | Não | Slug customizado com 3 a 48 caracteres. |
+| `customSlug` | `string` | Não | Alias de `slug`. |
 
-Criar link randomico:
-
-```bash
-curl -X POST https://link.guidev.site/api/links \
-  -H "Content-Type: application/json" \
-  -d "{\"url\":\"https://guidev.site\"}"
-```
-
-Criar link customizado:
+Exemplo:
 
 ```bash
 curl -X POST https://link.guidev.site/api/links \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: link_sua_api_key" \
   -d "{\"url\":\"https://guidev.site\",\"slug\":\"portfolio\"}"
 ```
 
-Criar link autenticado para aparecer no dashboard:
-
-```bash
-curl -X POST https://link.guidev.site/api/links \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer SUPABASE_ACCESS_TOKEN" \
-  -d "{\"url\":\"https://guidev.site\",\"slug\":\"portfolio\"}"
-```
-
-Exemplo com JavaScript:
-
-```ts
-const response = await fetch("https://link.guidev.site/api/links", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    url: "https://guidev.site",
-    slug: "portfolio"
-  })
-});
-
-const link = await response.json();
-console.log(link.shortUrl);
-```
-
-Resposta de sucesso (`201`):
+Resposta:
 
 ```json
 {
+  "id": "4f5b1d1a-7f26-4e49-9f4d-1f6b10e7725d",
   "slug": "portfolio",
   "url": "https://guidev.site/",
   "shortUrl": "https://link.guidev.site/portfolio",
@@ -162,79 +178,93 @@ Resposta de sucesso (`201`):
 }
 ```
 
-Erros possiveis:
+### Consultar Link
 
-| Status | Motivo |
-| --- | --- |
-| `400` | URL invalida ou slug customizado fora do formato aceito. |
-| `409` | Slug customizado ja esta em uso. |
-| `500` | Erro inesperado no servidor ou Supabase sem configuracao. |
-| `503` | Nao foi possivel gerar um slug randomico unico. |
-
-### Consultar link
-
-`GET /api/links/{slug}`
+```txt
+GET /api/links/{slug}
+```
 
 ```bash
 curl https://link.guidev.site/api/links/portfolio
 ```
 
-Resposta de sucesso (`200`):
-
-```json
-{
-  "slug": "portfolio",
-  "url": "https://guidev.site/",
-  "shortUrl": "https://link.guidev.site/portfolio",
-  "clicks": 0
-}
-```
-
-Resposta quando nao existe (`404`):
-
-```json
-{
-  "error": "Link nao encontrado."
-}
-```
-
-### Redirecionar
-
-`GET /{slug}`
-
-Abre o link encurtado e redireciona para a URL original.
+### Dashboard
 
 ```txt
-https://link.guidev.site/portfolio
+GET /api/dashboard
 ```
-
-Cada acesso ao redirect chama a funcao `increment_link_clicks` no Supabase e incrementa o contador `clicks`.
-
-### Dashboard autenticado
-
-`GET /api/dashboard`
 
 ```bash
 curl https://link.guidev.site/api/dashboard \
-  -H "Authorization: Bearer SUPABASE_ACCESS_TOKEN"
+  -H "X-API-Key: link_sua_api_key"
 ```
 
-Resposta resumida:
+### Estatísticas Públicas
 
-```json
-{
-  "summary": {
-    "links": 3,
-    "clicks": 42,
-    "trackedEvents": 42
-  },
-  "links": [],
-  "countries": [],
-  "referrers": [],
-  "recentEvents": []
-}
+```txt
+GET /api/stats
 ```
+
+Retorna o total público de links criados.
+
+## QR Code
+
+No dashboard, cada link pode gerar um QR Code customizado com:
+
+- Presets visuais
+- Cor do QR
+- Cor de fundo
+- Moldura
+- Texto em cima ou embaixo
+- Logo central
+- Download em PNG
+- Aviso de legibilidade para evitar QR Codes difíceis de escanear
 
 ## Deploy
 
-Na Vercel, configure as mesmas variaveis de ambiente e aponte o dominio `link.guidev.site`.
+O deploy recomendado é na Vercel.
+
+Configure as variáveis de ambiente no painel da Vercel:
+
+```bash
+NEXT_PUBLIC_APP_URL=https://seu-dominio.com
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+API_KEY_SECRET=use-a-long-random-secret
+```
+
+Depois configure no Supabase:
+
+```txt
+Site URL:
+https://seu-dominio.com
+
+Redirect URLs:
+https://seu-dominio.com/auth/callback
+https://seu-dominio.com/nova-senha
+```
+
+## Segurança
+
+Antes de publicar o repositório:
+
+- Nunca commite `.env` ou `.env.local`
+- Rode `git status` antes do commit
+- Troque chaves expostas acidentalmente
+- Mantenha `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor
+- Use um `API_KEY_SECRET` forte em produção
+
+## Scripts
+
+```bash
+npm run dev      # inicia o app localmente
+npm run build    # build de produção
+npm run start    # roda o build
+npm run lint     # lint do projeto
+```
+
+## Licença
+
+Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE) para mais detalhes.

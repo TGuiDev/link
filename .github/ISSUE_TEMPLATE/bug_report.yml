@@ -1,0 +1,50 @@
+name: Bug report
+description: Relate um problema encontrado no projeto.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por reportar um problema. Quanto mais contexto, mais fácil corrigir.
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição
+      description: O que aconteceu?
+      placeholder: Descreva o bug de forma objetiva.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir
+      description: Liste os passos para chegar no problema.
+      placeholder: |
+        1. Acesse ...
+        2. Clique em ...
+        3. Veja o erro ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Comportamento esperado
+      placeholder: O que deveria acontecer?
+    validations:
+      required: true
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Prints ou vídeos
+      description: Se possível, adicione imagens, vídeos ou logs.
+    validations:
+      required: false
+  - type: input
+    id: environment
+    attributes:
+      label: Ambiente
+      placeholder: Ex. Windows 11, Chrome 125, Node 22
+    validations:
+      required: false

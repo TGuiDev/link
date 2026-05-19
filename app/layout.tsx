@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: "Link",
     template: "%s | Link"
   },
-  description: "Crie links curtos randomicos ou personalizados, acompanhe metricas e use a API.",
+  description: "Crie links curtos randômicos ou personalizados, acompanhe métricas e use a API.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "https://link.guidev.site"),
   icons: {
     icon: "/Dark_Theme_Logo.svg",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Link",
-    description: "Crie links curtos randomicos ou personalizados, acompanhe metricas e use a API.",
+    description: "Crie links curtos randômicos ou personalizados, acompanhe métricas e use a API.",
     url: "/",
     siteName: "Link",
     images: [
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Link",
-    description: "Crie links curtos randomicos ou personalizados, acompanhe metricas e use a API.",
+    description: "Crie links curtos randômicos ou personalizados, acompanhe métricas e use a API.",
     images: ["/opengraph-image"]
   }
 };

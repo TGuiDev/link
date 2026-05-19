@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { getUserFromApiKey, isApiKey } from "@/lib/api-keys";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function getAuthenticatedUser(request: NextRequest) {
   const authorization = request.headers.get("authorization");

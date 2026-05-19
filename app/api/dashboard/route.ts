@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createApiKeyForUser } from "@/lib/api-keys";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getPublicBaseUrl, toLinkResponse } from "@/lib/links";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 type LinkRecord = {
   id: string;

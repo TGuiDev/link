@@ -41,7 +41,6 @@ export function Documentation() {
 
   useEffect(() => {
     if (cachedNavbarUser !== undefined) {
-      setIsCheckingUser(false);
       return;
     }
 

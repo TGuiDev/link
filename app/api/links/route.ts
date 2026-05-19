@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSlug, normalizeUrl, assertValidCustomSlug, toLinkResponse } from "@/lib/links";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 type CreateLinkPayload = {
