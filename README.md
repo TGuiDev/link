@@ -31,7 +31,7 @@ Encurtador de links feito com Next.js, Supabase e Tailwind CSS. O projeto inclui
 Clone o projeto e instale as dependências:
 
 ```bash
-git clone https://github.com/seu-usuario/link.git
+git clone https://github.com/TGuiDev/link.git
 cd link
 npm install
 ```
@@ -94,6 +94,19 @@ Para login social, habilite os providers desejados em Authentication > Providers
 /dashboard              Dashboard autenticado
 /documentacao           Documentação da API
 /{slug}                 Redirect do link curto
+```
+
+## Estrutura
+
+```txt
+src/app/              Rotas, páginas e endpoints do Next.js
+src/components/       Componentes de interface reutilizados pelas telas
+src/components/dashboard/ Dashboard autenticado
+src/components/documentation/ Documentação visual da API
+src/lib/              Regras de domínio, Supabase, API keys e helpers
+database/             Schema SQL do Supabase
+public/               Logos, imagens de preview e assets estáticos
+.github/              Templates de issue e pull request
 ```
 
 ## Dashboard

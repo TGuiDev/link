@@ -13,6 +13,7 @@ import {
   Copy,
   Download,
   ExternalLink,
+  Github,
   ImageIcon,
   LinkIcon,
   Loader2,
@@ -119,6 +120,8 @@ const qrPresets: QrPreset[] = [
 const card = "rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-colors duration-200 ease-out dark:border-white/10 dark:bg-zinc-900";
 const input =
   "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-zinc-950 outline-none transition-colors duration-200 ease-out focus:border-zinc-950 focus:ring-4 focus:ring-zinc-100 dark:border-white/10 dark:bg-zinc-950 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-300 dark:focus:ring-emerald-300/10";
+const contributeUrl = "https://github.com/TGuiDev/link";
+const portfolioUrl = "https://guidev.site";
 
 export function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -495,6 +498,15 @@ export function Dashboard() {
               <BookOpen size={15} />
               Documenta&ccedil;&atilde;o
             </Link>
+            <a
+              className="hidden h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-bold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-white/30 sm:inline-flex"
+              href={contributeUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Github size={15} />
+              Contribuir
+            </a>
             <div className="relative">
               <button
                 className="flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 pr-3 text-sm font-bold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-white/30"
@@ -516,7 +528,16 @@ export function Dashboard() {
               </button>
 
               {isMenuOpen ? (
-                <div className="absolute right-0 z-20 mt-2 w-40 rounded-xl border border-zinc-200 bg-white p-1 shadow-lg dark:border-white/10 dark:bg-zinc-900">
+                <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-zinc-200 bg-white p-1 shadow-lg dark:border-white/10 dark:bg-zinc-900">
+                  <a
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    href={contributeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <Github size={15} />
+                    Contribuir
+                  </a>
                   <button
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
                     onClick={signOut}
@@ -1105,6 +1126,28 @@ export function Dashboard() {
             ) : null}
           </div>
         )}
+        <footer className="mt-8 flex flex-col gap-5 border-t border-zinc-200 py-6 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-md">
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-zinc-950 dark:text-white">Link Dashboard</p>
+            <p className="mt-2 text-sm font-medium leading-6">Gerencie seus links, acompanhe acessos e personalize QR Codes.</p>
+            <p className="mt-3 text-xs font-black uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
+              Feito com <span className="text-rose-500">💖</span> por{" "}
+              <a className="text-zinc-950 underline decoration-zinc-300 underline-offset-4 transition hover:text-emerald-600 dark:text-white dark:decoration-white/20 dark:hover:text-emerald-300" href={portfolioUrl} target="_blank" rel="noreferrer">
+                GUI.DEV
+              </a>
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 font-bold">
+            <Link className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 transition hover:border-zinc-400 hover:text-zinc-950 dark:border-white/10 dark:bg-zinc-900 dark:hover:border-white/30 dark:hover:text-white" href="/documentacao">
+              <BookOpen size={15} />
+              Documenta&ccedil;&atilde;o
+            </Link>
+            <a className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 transition hover:border-zinc-400 hover:text-zinc-950 dark:border-white/10 dark:bg-zinc-900 dark:hover:border-white/30 dark:hover:text-white" href={contributeUrl} target="_blank" rel="noreferrer">
+              <Github size={15} />
+              Contribuir
+            </a>
+          </div>
+        </footer>
       </div>
       </section>
     </main>

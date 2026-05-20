@@ -14,6 +14,10 @@ type ChainSceneTheme = {
   rimLight: THREE.DirectionalLight;
 };
 
+type DeviceOrientationEventWithPermission = typeof DeviceOrientationEvent & {
+  requestPermission?: () => Promise<PermissionState>;
+};
+
 function makeOvalCurve(
   radiusX: number,
   radiusY: number,
@@ -302,10 +306,14 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     }
 
     if (typeof window !== "undefined" && window.DeviceOrientationEvent) {
-      if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+      const deviceOrientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventWithPermission;
+
+      const requestPermission = deviceOrientationEvent.requestPermission;
+
+      if (typeof requestPermission === "function") {
         const initGyro = () => {
-          (DeviceOrientationEvent as any).requestPermission()
-            .then((permissionState: string) => {
+          requestPermission()
+            .then((permissionState) => {
               if (permissionState === "granted") {
                 window.addEventListener("deviceorientation", handleOrientation);
               }
@@ -366,8 +374,8 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
         for (let i = 1; i <= linkCount; i += 1) {
           const p = particles[i];
 
-          let vx = (p.pos.x - p.prev.x) * damping;
-          let vy = (p.pos.y - p.prev.y) * damping;
+          const vx = (p.pos.x - p.prev.x) * damping;
+          const vy = (p.pos.y - p.prev.y) * damping;
 
           p.prev.copy(p.pos);
           p.pos.x += vx + currentGravity.x * subDelta * subDelta;
@@ -395,8 +403,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
             const dx = b.pos.x - a.pos.x;
             const dy = b.pos.y - a.pos.y;
-            const dz = 0; // Restrição calculada puramente em 2D
-
             const distance = Math.sqrt(dx * dx + dy * dy) || 0.0001;
 
             let target = restDistance;
