@@ -109,7 +109,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const currentGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
     const targetGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
 
-    const damping = 0.99;
+    const damping = 0.994;
     const entryStartOffset = 20;
 
     const maxDistance = restDistance + 0.01;
@@ -129,12 +129,22 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const particles: Particle[] = [];
     const linkMaterials: THREE.MeshStandardMaterial[] = [];
 
+    // LANÇAMENTO LATERAL PERFEITO (PÊNDULO 2D)
+    // Sorteia um ângulo de inclinação inicial fixado no plano X/Y (35° a 55°)
+    const sideSign = Math.random() > 0.5 ? 1 : -1;
+    const startAngle = (THREE.MathUtils.degToRad(35 + Math.random() * 20)) * sideSign;
+
     for (let i = 0; i <= linkCount; i += 1) {
-      const pos = new THREE.Vector3(
-        anchor.x,
-        anchor.y + entryStartOffset - i * restDistance,
-        0
-      );
+      const currentDistance = i * restDistance;
+
+      // Monta os elos em uma linha diagonal perfeita e bidimensional
+      const initialX = anchor.x + Math.sin(startAngle) * currentDistance;
+      const initialY = (anchor.y + entryStartOffset) - Math.cos(startAngle) * currentDistance;
+
+      // ZZERADO ABSOLUTO: Impede qualquer efeito de torção ou giro helicoidal
+      const initialZ = 0;
+
+      const pos = new THREE.Vector3(initialX, initialY, initialZ);
 
       const material = baseMaterial.clone();
       const mesh = new THREE.Mesh(linkGeometry, material);
@@ -242,7 +252,9 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
     const euler = new THREE.Euler();
     const quat = new THREE.Quaternion();
+    const baseQuatInverse = new THREE.Quaternion();
     const localGravityVector = new THREE.Vector3(0, -1, 0);
+    let isCalibrated = false;
 
     function handleOrientation(event: DeviceOrientationEvent) {
       if (event.beta === null || event.gamma === null) return;
@@ -254,20 +266,38 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       euler.set(betaRad, gammaRad, -alphaRad, "YXZ");
       quat.setFromEuler(euler);
 
-      localGravityVector.set(0, -1, 0).applyQuaternion(quat.invert());
+      if (!isCalibrated) {
+        baseQuatInverse.copy(quat).invert();
+        isCalibrated = true;
+      }
+
+      const relativeQuat = quat.clone().premultiply(baseQuatInverse);
+      localGravityVector.set(0, -1, 0).applyQuaternion(relativeQuat.invert());
 
       let gx = localGravityVector.x;
       let gy = localGravityVector.y;
+
+      const screenOrientationAngle =
+        (typeof window !== "undefined" && window.orientation) ||
+        (typeof screen !== "undefined" && screen.orientation?.angle) || 0;
+
+      if (screenOrientationAngle === 90) {
+        const temp = gx;
+        gx = -gy;
+        gy = temp;
+      } else if (screenOrientationAngle === -90 || screenOrientationAngle === 270) {
+        const temp = gx;
+        gx = gy;
+        gy = -temp;
+      } else if (screenOrientationAngle === 180) {
+        gx = -gx;
+        gy = -gy;
+      }
 
       const len = Math.sqrt(gx * gx + gy * gy) || 0.001;
       gx = (gx / len) * gravityMagnitude;
       gy = (gy / len) * gravityMagnitude;
 
-      if (localGravityVector.z < 0 && event.beta > 90) {
-         gy = -gy;
-      }
-
-      // CORREÇÃO DE ESPELHAMENTO: Invertido o eixo X (-gx) para alinhar perfeitamente com a rotação física do mobile
       targetGravity.set(-gx, gy, 0);
     }
 
@@ -296,6 +326,9 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       index: number
     ) {
       const direction = new THREE.Vector3().subVectors(b, a);
+      // Ignora variações residuais em Z para garantir estabilidade absoluta no plano da tela
+      direction.z = 0;
+
       if (direction.lengthSq() < 0.0001) return;
       direction.normalize();
 
@@ -316,7 +349,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     let entryOffset = entryStartOffset;
 
     function fixAnchor() {
-      particles[0].pos.set(anchor.x, anchor.y + entryOffset, anchor.z);
+      particles[0].pos.set(anchor.x, anchor.y + entryOffset, 0);
       particles[0].prev.copy(particles[0].pos);
     }
 
@@ -335,12 +368,11 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
           let vx = (p.pos.x - p.prev.x) * damping;
           let vy = (p.pos.y - p.prev.y) * damping;
-          let vz = (p.pos.z - p.prev.z) * damping;
 
           p.prev.copy(p.pos);
           p.pos.x += vx + currentGravity.x * subDelta * subDelta;
           p.pos.y += vy + currentGravity.y * subDelta * subDelta;
-          p.pos.z += vz;
+          p.pos.z = 0; // Trava completa de física planar em Z
 
           if (i === draggedParticleIndex) {
             const springStiffness = 350;
@@ -348,11 +380,9 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
             const fx = (targetDragPos.x - p.pos.x) * springStiffness - (vx / subDelta) * springDamping;
             const fy = (targetDragPos.y - p.pos.y) * springStiffness - (vy / subDelta) * springDamping;
-            const fz = (targetDragPos.z - p.pos.z) * springStiffness - (vz / subDelta) * springDamping;
 
             p.pos.x += fx * subDelta * subDelta;
             p.pos.y += fy * subDelta * subDelta;
-            p.pos.z += fz * subDelta * subDelta;
           }
         }
 
@@ -365,9 +395,9 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
             const dx = b.pos.x - a.pos.x;
             const dy = b.pos.y - a.pos.y;
-            const dz = b.pos.z - a.pos.z;
+            const dz = 0; // Restrição calculada puramente em 2D
 
-            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.0001;
+            const distance = Math.sqrt(dx * dx + dy * dy) || 0.0001;
 
             let target = restDistance;
             if (distance > maxDistance) target = maxDistance;
@@ -383,22 +413,18 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
             if (!aFixed) {
               a.pos.x += dx * diff * scalarA;
               a.pos.y += dy * diff * scalarA;
-              a.pos.z += dz * diff * scalarA;
             }
 
             b.pos.x -= dx * diff * scalarB;
             b.pos.y -= dy * diff * scalarB;
-            b.pos.z -= dz * diff * scalarB;
 
             if (distance < restDistance * 0.98) {
               const friction = 0.88;
               b.prev.x = b.pos.x - (b.pos.x - b.prev.x) * friction;
               b.prev.y = b.pos.y - (b.pos.y - b.prev.y) * friction;
-              b.prev.z = b.pos.z - (b.pos.z - b.prev.z) * friction;
               if (!aFixed) {
                 a.prev.x = a.pos.x - (a.pos.x - a.prev.x) * friction;
                 a.prev.y = a.pos.y - (a.pos.y - a.prev.y) * friction;
-                a.prev.z = a.pos.z - (a.pos.z - a.prev.z) * friction;
               }
             }
           }
