@@ -105,7 +105,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     // Configurações de Física Avançada e Estabilização
     const substeps = 12;
     const constraintIterations = 16;
-    const gravity = -500;
+    const gravity = -700;
     const damping = 0.99; // Amortecimento global ligeiramente maior para evitar tremores espontâneos
     const entryStartOffset = 20;
 
