@@ -105,10 +105,10 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const substeps = 12;
     const constraintIterations = 16;
 
-    // Vetores dinâmicos para controle do Giroscópio
-    const baseGravityY = -900;
-    const currentGravity = new THREE.Vector3(0, baseGravityY, 0);
-    const targetGravity = new THREE.Vector3(0, baseGravityY, 0);
+    // Configurações de Força e Vetores do Sensor Otimizados
+    const gravityMagnitude = 900;
+    const currentGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
+    const targetGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
 
     const damping = 0.99;
     const entryStartOffset = 20;
@@ -241,22 +241,44 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
 
-    // SISTEMA DE CAPTURA DO GIROSCÓPIO
+    // TRATAMENTO MATEMÁTICO DO GIROSCÓPIO CONTRA GIMBAL LOCK E RUIDO
+    const euler = new THREE.Euler();
+    const quat = new THREE.Quaternion();
+    const localGravityVector = new THREE.Vector3(0, -1, 0);
+
     function handleOrientation(event: DeviceOrientationEvent) {
-      const gamma = event.gamma ?? 0; // Inclinação Esquerda/Direita [-90, 90]
-      const beta = event.beta ?? 0;   // Inclinação Frente/Trás [-180, 180]
+      if (event.beta === null || event.gamma === null) return;
 
-      // Mapeia os ângulos em vetores de força proporcionais
-      // Multiplicamos para dar um peso físico condizente com a gravidade base (-900)
-      const forceX = (gamma / 45) * 400;
-      const forceY = baseGravityY + (Math.abs(beta) < 90 ? (beta / 90) * 150 : 0);
+      // Converte os ângulos intrínsecos do dispositivo (Z-X'-Y'') para radianos
+      const alphaRad = THREE.MathUtils.degToRad(event.alpha ?? 0);
+      const betaRad = THREE.MathUtils.degToRad(event.beta);
+      const gammaRad = THREE.MathUtils.degToRad(event.gamma);
 
-      targetGravity.set(forceX, forceY, 0);
+      // Constrói a rotação do aparelho livre de inversões de quadrante bruscas
+      euler.set(betaRad, gammaRad, -alphaRad, "YXZ");
+      quat.setFromEuler(euler);
+
+      // Descobre para onde a gravidade da Terra (0, -1, 0) aponta em relação à tela do celular
+      localGravityVector.set(0, -1, 0).applyQuaternion(quat.invert());
+
+      // Filtramos apenas as componentes X e Y da tela para manter a simulação firme em 2D
+      let gx = localGravityVector.x;
+      let gy = localGravityVector.y;
+
+      // Normaliza o vetor 2D resultante para restaurar a magnitude física original
+      const len = Math.sqrt(gx * gx + gy * gy) || 0.001;
+      gx = (gx / len) * gravityMagnitude;
+      gy = (gy / len) * gravityMagnitude;
+
+      // Evita o efeito "voar de cabeça para baixo" se o celular for virado totalmente ao contrário
+      if (localGravityVector.z < 0 && event.beta > 90) {
+         gy = -gy;
+      }
+
+      targetGravity.set(gx, gy, 0);
     }
 
-    // Ativação segura do sensor de movimento
     if (typeof window !== "undefined" && window.DeviceOrientationEvent) {
-      // Caso específico do iOS que requer confirmação de permissão por API
       if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
         const initGyro = () => {
           (DeviceOrientationEvent as any).requestPermission()
@@ -270,7 +292,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
         };
         window.addEventListener("pointerdown", initGyro);
       } else {
-        // Dispositivos Android ou navegadores desktop modernos simulados
         window.addEventListener("deviceorientation", handleOrientation);
       }
     }
@@ -313,8 +334,8 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       entryOffset *= Math.pow(0.03, delta);
       const subDelta = delta / substeps;
 
-      // Amortece e suaviza a transição da gravidade (Filtro passa-baixa) para mitigar tremores brutos
-      currentGravity.lerp(targetGravity, 0.1);
+      // Filtro Passa-Baixa (Lerp de 0.04): Dá inércia orgânica e elimina tremores manuais
+      currentGravity.lerp(targetGravity, 0.04);
 
       for (let step = 0; step < substeps; step += 1) {
         for (let i = 1; i <= linkCount; i += 1) {
@@ -327,7 +348,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
           p.prev.copy(p.pos);
           p.pos.x += vx + currentGravity.x * subDelta * subDelta;
           p.pos.y += vy + currentGravity.y * subDelta * subDelta;
-          p.pos.z += vz + currentGravity.z * subDelta * subDelta;
+          p.pos.z += vz; // Força Z estritamente isolada do giroscópio para evitar distorção de profundidade
 
           if (i === draggedParticleIndex) {
             const springStiffness = 350;
