@@ -16,6 +16,7 @@ import {
   ImageIcon,
   LinkIcon,
   Loader2,
+  LockKeyhole,
   LogOut,
   MapPin,
   MousePointerClick,
@@ -655,30 +656,40 @@ export function Dashboard() {
                         <input className={input} value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://guidev.site" inputMode="url" />
                       </label>
 
-                      <label className="block space-y-3">
-                        <span className="flex items-center justify-between gap-4">
-                          <span className="text-sm font-bold">Slug</span>
-                          <span className="flex items-center gap-1 text-sm font-bold">
-                            <input
-                              className="h-4 w-4 rounded-md border-zinc-300 accent-zinc-950 dark:border-white/20 dark:accent-white"
-                              type="checkbox"
-                              checked={custom}
-                              onChange={(event) => setCustom(event.target.checked)}
-                            />
-                            Customizado
+                      <div className="grid grid-cols-2 gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-950">
+                        <LinkModeButton active={!custom} onClick={() => setCustom(false)} icon={<Wand2 size={16} />}>
+                          Random
+                        </LinkModeButton>
+                        <LinkModeButton active={custom} onClick={() => setCustom(true)} icon={<LockKeyhole size={16} />}>
+                          Custom
+                        </LinkModeButton>
+                      </div>
+
+                      <label className="block space-y-2">
+                        <span className="text-sm font-bold">Slug</span>
+                        <div className="flex overflow-hidden rounded-lg border border-zinc-200 bg-white focus-within:border-zinc-950 focus-within:ring-4 focus-within:ring-zinc-100 dark:border-white/10 dark:bg-zinc-950 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/10">
+                          <span className="hidden h-12 items-center border-r border-zinc-200 px-3 text-sm font-bold text-zinc-400 dark:border-white/10 sm:flex">
+                            link.guidev.site/
                           </span>
-                        </span>
-                        <input className={input} disabled={!custom} value={custom ? slug : ""} onChange={(event) => setSlug(event.target.value)} placeholder={custom ? "batata" : "random"} />
+                          <input
+                            className="h-12 min-w-0 flex-1 bg-transparent px-4 text-zinc-950 outline-none disabled:text-zinc-400 dark:text-white dark:disabled:text-zinc-500"
+                            disabled={!custom}
+                            value={custom ? slug : ""}
+                            onChange={(event) => setSlug(event.target.value)}
+                            placeholder={custom ? "" : "random"}
+                          />
+                        </div>
                       </label>
 
-                      {error ? <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div> : null}
+                      {error ? <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-950/30 dark:text-red-200">{error}</div> : null}
 
                       <button
+                        type="submit"
                         className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 px-5 text-sm font-black text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
                         disabled={!canSubmit || isCreating}
                       >
-                        {isCreating ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
-                        Criar e copiar
+                        {isCreating ? <Loader2 className="animate-spin" size={18} /> : <LinkIcon size={18} />}
+                        Encurtar
                       </button>
                     </form>
                   </div>
@@ -1120,6 +1131,33 @@ function SectionButton({
       }`}
       onClick={onClick}
       type="button"
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+function LinkModeButton({
+  active,
+  children,
+  icon,
+  onClick
+}: {
+  active: boolean;
+  children: ReactNode;
+  icon: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={`flex h-10 items-center justify-center gap-2 rounded-md text-sm font-bold transition ${
+        active
+          ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-white"
+          : "text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+      }`}
+      onClick={onClick}
     >
       {icon}
       {children}

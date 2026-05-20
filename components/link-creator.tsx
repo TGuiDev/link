@@ -363,7 +363,7 @@ export function LinkCreator() {
                     <input
                       className="h-12 min-w-0 flex-1 bg-transparent px-4 text-zinc-950 outline-none disabled:text-zinc-400 dark:text-white dark:disabled:text-zinc-500"
                       disabled={mode === "random"}
-                      placeholder={mode === "random" ? "random" : "batata"}
+                      placeholder={mode === "random" ? "random" : ""}
                       value={mode === "random" ? "" : slug}
                       onChange={(event) => setSlug(event.target.value)}
                     />

@@ -77,7 +77,7 @@ export function Documentation() {
     <main className={theme === "dark" ? "dark" : ""}>
       <section className="doc-page h-screen overflow-y-auto bg-zinc-50 text-zinc-950 transition-colors duration-200 ease-out dark:bg-zinc-950 dark:text-white">
         <div className="mx-auto w-full max-w-7xl px-5 py-6 md:px-8">
-          <header className="mb-8 flex items-center justify-between gap-4">
+          <header className="mb-8 flex items-center justify-between gap-4 z[90]">
             <Link href="/" className="flex items-center gap-3">
               <Image
                 className="h-10 w-10 rounded-lg object-contain"
