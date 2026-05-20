@@ -105,7 +105,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const substeps = 12;
     const constraintIterations = 16;
 
-    // Configurações de Força e Vetores do Sensor Otimizados
     const gravityMagnitude = 900;
     const currentGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
     const targetGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
@@ -241,7 +240,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
 
-    // TRATAMENTO MATEMÁTICO DO GIROSCÓPIO CONTRA GIMBAL LOCK E RUIDO
     const euler = new THREE.Euler();
     const quat = new THREE.Quaternion();
     const localGravityVector = new THREE.Vector3(0, -1, 0);
@@ -249,33 +247,28 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     function handleOrientation(event: DeviceOrientationEvent) {
       if (event.beta === null || event.gamma === null) return;
 
-      // Converte os ângulos intrínsecos do dispositivo (Z-X'-Y'') para radianos
       const alphaRad = THREE.MathUtils.degToRad(event.alpha ?? 0);
       const betaRad = THREE.MathUtils.degToRad(event.beta);
       const gammaRad = THREE.MathUtils.degToRad(event.gamma);
 
-      // Constrói a rotação do aparelho livre de inversões de quadrante bruscas
       euler.set(betaRad, gammaRad, -alphaRad, "YXZ");
       quat.setFromEuler(euler);
 
-      // Descobre para onde a gravidade da Terra (0, -1, 0) aponta em relação à tela do celular
       localGravityVector.set(0, -1, 0).applyQuaternion(quat.invert());
 
-      // Filtramos apenas as componentes X e Y da tela para manter a simulação firme em 2D
       let gx = localGravityVector.x;
       let gy = localGravityVector.y;
 
-      // Normaliza o vetor 2D resultante para restaurar a magnitude física original
       const len = Math.sqrt(gx * gx + gy * gy) || 0.001;
       gx = (gx / len) * gravityMagnitude;
       gy = (gy / len) * gravityMagnitude;
 
-      // Evita o efeito "voar de cabeça para baixo" se o celular for virado totalmente ao contrário
       if (localGravityVector.z < 0 && event.beta > 90) {
          gy = -gy;
       }
 
-      targetGravity.set(gx, gy, 0);
+      // CORREÇÃO DE ESPELHAMENTO: Invertido o eixo X (-gx) para alinhar perfeitamente com a rotação física do mobile
+      targetGravity.set(-gx, gy, 0);
     }
 
     if (typeof window !== "undefined" && window.DeviceOrientationEvent) {
@@ -334,7 +327,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       entryOffset *= Math.pow(0.03, delta);
       const subDelta = delta / substeps;
 
-      // Filtro Passa-Baixa (Lerp de 0.04): Dá inércia orgânica e elimina tremores manuais
       currentGravity.lerp(targetGravity, 0.04);
 
       for (let step = 0; step < substeps; step += 1) {
@@ -348,7 +340,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
           p.prev.copy(p.pos);
           p.pos.x += vx + currentGravity.x * subDelta * subDelta;
           p.pos.y += vy + currentGravity.y * subDelta * subDelta;
-          p.pos.z += vz; // Força Z estritamente isolada do giroscópio para evitar distorção de profundidade
+          p.pos.z += vz;
 
           if (i === draggedParticleIndex) {
             const springStiffness = 350;
