@@ -102,14 +102,17 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const linkHeight = radiusY * 2;
     const restDistance = linkHeight - tubeRadius * 2;
 
-    // Configurações de Física Avançada e Estabilização
     const substeps = 12;
     const constraintIterations = 16;
-    const gravity = -700;
-    const damping = 0.99; // Amortecimento global ligeiramente maior para evitar tremores espontâneos
+
+    // Vetores dinâmicos para controle do Giroscópio
+    const baseGravityY = -900;
+    const currentGravity = new THREE.Vector3(0, baseGravityY, 0);
+    const targetGravity = new THREE.Vector3(0, baseGravityY, 0);
+
+    const damping = 0.99;
     const entryStartOffset = 20;
 
-    // Margens rígidas: impede elasticidade visual
     const maxDistance = restDistance + 0.01;
     const minDistance = restDistance * 0.95;
 
@@ -176,7 +179,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     resizeObserver.observe(containerElement);
     resize();
 
-    // Controle de estado do Mouse/Pointer
     let draggedParticleIndex: number | null = null;
     const dragOffset = new THREE.Vector3();
     const targetDragPos = new THREE.Vector3();
@@ -219,7 +221,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
       draggedParticleIndex = closestIndex;
       dragOffset.subVectors(particles[closestIndex].pos, pointerWorld);
-      // Evita saltos repentinos ao clicar capturando o ponto exato atual
       targetDragPos.copy(particles[closestIndex].pos);
       event.preventDefault();
     }
@@ -227,7 +228,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     function onPointerMove(event: PointerEvent) {
       if (draggedParticleIndex === null) return;
       setPointerWorld(event);
-      // Atualiza de forma suave o alvo para onde a mola virtual deve puxar o elo
       targetDragPos.copy(pointerWorld).add(dragOffset);
       event.preventDefault();
     }
@@ -240,6 +240,40 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     window.addEventListener("pointermove", onPointerMove);
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
+
+    // SISTEMA DE CAPTURA DO GIROSCÓPIO
+    function handleOrientation(event: DeviceOrientationEvent) {
+      const gamma = event.gamma ?? 0; // Inclinação Esquerda/Direita [-90, 90]
+      const beta = event.beta ?? 0;   // Inclinação Frente/Trás [-180, 180]
+
+      // Mapeia os ângulos em vetores de força proporcionais
+      // Multiplicamos para dar um peso físico condizente com a gravidade base (-900)
+      const forceX = (gamma / 45) * 400;
+      const forceY = baseGravityY + (Math.abs(beta) < 90 ? (beta / 90) * 150 : 0);
+
+      targetGravity.set(forceX, forceY, 0);
+    }
+
+    // Ativação segura do sensor de movimento
+    if (typeof window !== "undefined" && window.DeviceOrientationEvent) {
+      // Caso específico do iOS que requer confirmação de permissão por API
+      if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+        const initGyro = () => {
+          (DeviceOrientationEvent as any).requestPermission()
+            .then((permissionState: string) => {
+              if (permissionState === "granted") {
+                window.addEventListener("deviceorientation", handleOrientation);
+              }
+            })
+            .catch(console.error);
+          window.removeEventListener("pointerdown", initGyro);
+        };
+        window.addEventListener("pointerdown", initGyro);
+      } else {
+        // Dispositivos Android ou navegadores desktop modernos simulados
+        window.addEventListener("deviceorientation", handleOrientation);
+      }
+    }
 
     function orientLink(
       mesh: THREE.Mesh,
@@ -279,6 +313,9 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       entryOffset *= Math.pow(0.03, delta);
       const subDelta = delta / substeps;
 
+      // Amortece e suaviza a transição da gravidade (Filtro passa-baixa) para mitigar tremores brutos
+      currentGravity.lerp(targetGravity, 0.1);
+
       for (let step = 0; step < substeps; step += 1) {
         for (let i = 1; i <= linkCount; i += 1) {
           const p = particles[i];
@@ -288,20 +325,18 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
           let vz = (p.pos.z - p.prev.z) * damping;
 
           p.prev.copy(p.pos);
-          p.pos.x += vx;
-          p.pos.y += vy + gravity * subDelta * subDelta;
-          p.pos.z += vz;
+          p.pos.x += vx + currentGravity.x * subDelta * subDelta;
+          p.pos.y += vy + currentGravity.y * subDelta * subDelta;
+          p.pos.z += vz + currentGravity.z * subDelta * subDelta;
 
-          // Se este elo estiver sendo arrastado, aplicamos uma força de mola controlada
           if (i === draggedParticleIndex) {
-            const springStiffness = 350; // Quão firme a mola puxa o elo em direção ao mouse
-            const springDamping = 12;    // Evita tremores de mola no ponto de contato
+            const springStiffness = 350;
+            const springDamping = 12;
 
             const fx = (targetDragPos.x - p.pos.x) * springStiffness - (vx / subDelta) * springDamping;
             const fy = (targetDragPos.y - p.pos.y) * springStiffness - (vy / subDelta) * springDamping;
             const fz = (targetDragPos.z - p.pos.z) * springStiffness - (vz / subDelta) * springDamping;
 
-            // Aplica a aceleração gerada pela força da mola virtual
             p.pos.x += fx * subDelta * subDelta;
             p.pos.y += fy * subDelta * subDelta;
             p.pos.z += fz * subDelta * subDelta;
@@ -328,8 +363,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
             const diff = (distance - target) / distance;
 
             const aFixed = i === 0;
-            // Nenhum nó intermediário se comporta como massa infinita pura agora,
-            // permitindo que a restrição distribua a tração suavemente pela corrente.
 
             const scalarA = aFixed ? 0.0 : 0.5;
             const scalarB = aFixed ? 1.0 : 0.5;
@@ -344,7 +377,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
             b.pos.y -= dy * diff * scalarB;
             b.pos.z -= dz * diff * scalarB;
 
-            // Fricção de aproximação extrema (reduz colisão elástica violenta entre elos)
             if (distance < restDistance * 0.98) {
               const friction = 0.88;
               b.prev.x = b.pos.x - (b.pos.x - b.prev.x) * friction;
@@ -382,6 +414,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("deviceorientation", handleOrientation);
       sceneThemeRef.current = null;
       renderer.dispose();
       linkGeometry.dispose();
