@@ -84,7 +84,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.domElement.style.cssText =
-      "display:block;width:100%;height:100%;pointer-events:auto;";
+      "display:block;width:100%;height:100%;pointer-events:auto;touch-action:none;";
     containerElement.appendChild(renderer.domElement);
 
     const baseMaterial = new THREE.MeshStandardMaterial({
@@ -106,14 +106,15 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const linkHeight = radiusY * 2;
     const restDistance = linkHeight - tubeRadius * 2;
 
-    const substeps = 12;
+    // Física precisa independente de taxa de atualização (60Hz, 120Hz, 144Hz, 240Hz)
+    const FIXED_DT = 1 / 120; // 120 Hz de simulação física constante
     const constraintIterations = 16;
-
     const gravityMagnitude = 900;
     const currentGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
     const targetGravity = new THREE.Vector3(0, -gravityMagnitude, 0);
 
-    const damping = 0.994;
+    // Amortecimento exponencial matematicamente exato (tempo real invariante)
+    const DAMPING = Math.exp(-0.8 * FIXED_DT);
     const entryStartOffset = 20;
 
     const maxDistance = restDistance + 0.01;
@@ -133,23 +134,17 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const particles: Particle[] = [];
     const linkMaterials: THREE.MeshStandardMaterial[] = [];
 
-    // LANÇAMENTO LATERAL PERFEITO (PÊNDULO 2D)
-    // Sorteia um ângulo de inclinação inicial fixado no plano X/Y (35° a 55°)
+    // Lançamento lateral inicial do pêndulo
     const sideSign = Math.random() > 0.5 ? 1 : -1;
     const startAngle = (THREE.MathUtils.degToRad(35 + Math.random() * 20)) * sideSign;
 
     for (let i = 0; i <= linkCount; i += 1) {
       const currentDistance = i * restDistance;
-
-      // Monta os elos em uma linha diagonal perfeita e bidimensional
       const initialX = anchor.x + Math.sin(startAngle) * currentDistance;
       const initialY = (anchor.y + entryStartOffset) - Math.cos(startAngle) * currentDistance;
-
-      // ZZERADO ABSOLUTO: Impede qualquer efeito de torção ou giro helicoidal
       const initialZ = 0;
 
       const pos = new THREE.Vector3(initialX, initialY, initialZ);
-
       const material = baseMaterial.clone();
       const mesh = new THREE.Mesh(linkGeometry, material);
       mesh.castShadow = false;
@@ -197,6 +192,11 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
     const targetDragPos = new THREE.Vector3();
     const projectedParticle = new THREE.Vector3();
 
+    // Rastreamento de velocidade de soltura (arremesso natural com inércia)
+    const lastPointerPos = new THREE.Vector3();
+    const pointerVelocity = new THREE.Vector3();
+    let lastPointerTime = window.performance.now();
+
     function setPointerWorld(event: PointerEvent) {
       const rect = renderer.domElement.getBoundingClientRect();
       pointerNdc.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -230,30 +230,56 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
         }
       }
 
-      if (closestDistance > 32) return;
+      // Área de toque generosa e responsiva para mobile (touch) e desktop (mouse)
+      const isTouch = event.pointerType === "touch";
+      const maxHitDistance = isTouch ? 64 : 42;
+
+      if (closestDistance > maxHitDistance) return;
 
       draggedParticleIndex = closestIndex;
       dragOffset.subVectors(particles[closestIndex].pos, pointerWorld);
       targetDragPos.copy(particles[closestIndex].pos);
-      event.preventDefault();
+      lastPointerPos.copy(pointerWorld);
+      pointerVelocity.set(0, 0, 0);
+      lastPointerTime = window.performance.now();
+
+      if (event.cancelable) {
+        event.preventDefault();
+      }
     }
 
     function onPointerMove(event: PointerEvent) {
       if (draggedParticleIndex === null) return;
       setPointerWorld(event);
       targetDragPos.copy(pointerWorld).add(dragOffset);
-      event.preventDefault();
+
+      const now = window.performance.now();
+      const dt = Math.max((now - lastPointerTime) / 1000, 0.001);
+      pointerVelocity.subVectors(pointerWorld, lastPointerPos).divideScalar(dt);
+      lastPointerPos.copy(pointerWorld);
+      lastPointerTime = now;
+
+      if (event.cancelable) {
+        event.preventDefault();
+      }
     }
 
     function onPointerUp() {
-      draggedParticleIndex = null;
+      if (draggedParticleIndex !== null) {
+        // Transfere o impulso do gesto para o elo solto
+        const p = particles[draggedParticleIndex];
+        const impulse = pointerVelocity.clone().clampLength(0, 45);
+        p.prev.subVectors(p.pos, impulse.multiplyScalar(FIXED_DT));
+        draggedParticleIndex = null;
+      }
     }
 
-    window.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerdown", onPointerDown, { passive: false });
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
     window.addEventListener("pointerup", onPointerUp);
     window.addEventListener("pointercancel", onPointerUp);
 
+    // Giroscópio com filtro de suavização para dispositivos móveis
     const euler = new THREE.Euler();
     const quat = new THREE.Quaternion();
     const baseQuatInverse = new THREE.Quaternion();
@@ -307,7 +333,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
     if (typeof window !== "undefined" && window.DeviceOrientationEvent) {
       const deviceOrientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventWithPermission;
-
       const requestPermission = deviceOrientationEvent.requestPermission;
 
       if (typeof requestPermission === "function") {
@@ -334,7 +359,6 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       index: number
     ) {
       const direction = new THREE.Vector3().subVectors(b, a);
-      // Ignora variações residuais em Z para garantir estabilidade absoluta no plano da tela
       direction.z = 0;
 
       if (direction.lengthSq() < 0.0001) return;
@@ -354,6 +378,7 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
 
     let animationFrame = 0;
     let lastTime = window.performance.now();
+    let physicsAccumulator = 0;
     let entryOffset = entryStartOffset;
 
     function fixAnchor() {
@@ -361,81 +386,86 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
       particles[0].prev.copy(particles[0].pos);
     }
 
+    function stepPhysics(dt: number) {
+      currentGravity.lerp(targetGravity, 0.06);
+
+      for (let i = 1; i <= linkCount; i += 1) {
+        const p = particles[i];
+
+        const vx = (p.pos.x - p.prev.x) * DAMPING;
+        const vy = (p.pos.y - p.prev.y) * DAMPING;
+
+        p.prev.copy(p.pos);
+        p.pos.x += vx + currentGravity.x * dt * dt;
+        p.pos.y += vy + currentGravity.y * dt * dt;
+        p.pos.z = 0;
+
+        if (i === draggedParticleIndex) {
+          const springStiffness = 380;
+          const springDamping = 14;
+
+          const fx = (targetDragPos.x - p.pos.x) * springStiffness - (vx / dt) * springDamping;
+          const fy = (targetDragPos.y - p.pos.y) * springStiffness - (vy / dt) * springDamping;
+
+          p.pos.x += fx * dt * dt;
+          p.pos.y += fy * dt * dt;
+        }
+      }
+
+      fixAnchor();
+
+      for (let iteration = 0; iteration < constraintIterations; iteration += 1) {
+        for (let i = 0; i < linkCount; i += 1) {
+          const a = particles[i];
+          const b = particles[i + 1];
+
+          const dx = b.pos.x - a.pos.x;
+          const dy = b.pos.y - a.pos.y;
+          const distance = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+
+          let target = restDistance;
+          if (distance > maxDistance) target = maxDistance;
+          else if (distance < minDistance) target = minDistance;
+
+          const diff = (distance - target) / distance;
+          const aFixed = i === 0;
+
+          const scalarA = aFixed ? 0.0 : 0.5;
+          const scalarB = aFixed ? 1.0 : 0.5;
+
+          if (!aFixed) {
+            a.pos.x += dx * diff * scalarA;
+            a.pos.y += dy * diff * scalarA;
+          }
+
+          b.pos.x -= dx * diff * scalarB;
+          b.pos.y -= dy * diff * scalarB;
+
+          if (distance < restDistance * 0.98) {
+            const friction = 0.9;
+            b.prev.x = b.pos.x - (b.pos.x - b.prev.x) * friction;
+            b.prev.y = b.pos.y - (b.pos.y - b.prev.y) * friction;
+            if (!aFixed) {
+              a.prev.x = a.pos.x - (a.pos.x - a.prev.x) * friction;
+              a.prev.y = a.pos.y - (a.pos.y - a.prev.y) * friction;
+            }
+          }
+        }
+        fixAnchor();
+      }
+    }
+
     function animate(now: number) {
-      const delta = Math.min((now - lastTime) / 1000, 0.04);
+      const frameDelta = Math.min((now - lastTime) / 1000, 0.06);
       lastTime = now;
 
-      entryOffset *= Math.pow(0.03, delta);
-      const subDelta = delta / substeps;
+      entryOffset *= Math.pow(0.04, frameDelta);
 
-      currentGravity.lerp(targetGravity, 0.04);
-
-      for (let step = 0; step < substeps; step += 1) {
-        for (let i = 1; i <= linkCount; i += 1) {
-          const p = particles[i];
-
-          const vx = (p.pos.x - p.prev.x) * damping;
-          const vy = (p.pos.y - p.prev.y) * damping;
-
-          p.prev.copy(p.pos);
-          p.pos.x += vx + currentGravity.x * subDelta * subDelta;
-          p.pos.y += vy + currentGravity.y * subDelta * subDelta;
-          p.pos.z = 0; // Trava completa de física planar em Z
-
-          if (i === draggedParticleIndex) {
-            const springStiffness = 350;
-            const springDamping = 12;
-
-            const fx = (targetDragPos.x - p.pos.x) * springStiffness - (vx / subDelta) * springDamping;
-            const fy = (targetDragPos.y - p.pos.y) * springStiffness - (vy / subDelta) * springDamping;
-
-            p.pos.x += fx * subDelta * subDelta;
-            p.pos.y += fy * subDelta * subDelta;
-          }
-        }
-
-        fixAnchor();
-
-        for (let iteration = 0; iteration < constraintIterations; iteration += 1) {
-          for (let i = 0; i < linkCount; i += 1) {
-            const a = particles[i];
-            const b = particles[i + 1];
-
-            const dx = b.pos.x - a.pos.x;
-            const dy = b.pos.y - a.pos.y;
-            const distance = Math.sqrt(dx * dx + dy * dy) || 0.0001;
-
-            let target = restDistance;
-            if (distance > maxDistance) target = maxDistance;
-            else if (distance < minDistance) target = minDistance;
-
-            const diff = (distance - target) / distance;
-
-            const aFixed = i === 0;
-
-            const scalarA = aFixed ? 0.0 : 0.5;
-            const scalarB = aFixed ? 1.0 : 0.5;
-
-            if (!aFixed) {
-              a.pos.x += dx * diff * scalarA;
-              a.pos.y += dy * diff * scalarA;
-            }
-
-            b.pos.x -= dx * diff * scalarB;
-            b.pos.y -= dy * diff * scalarB;
-
-            if (distance < restDistance * 0.98) {
-              const friction = 0.88;
-              b.prev.x = b.pos.x - (b.pos.x - b.prev.x) * friction;
-              b.prev.y = b.pos.y - (b.pos.y - b.prev.y) * friction;
-              if (!aFixed) {
-                a.prev.x = a.pos.x - (a.pos.x - a.prev.x) * friction;
-                a.prev.y = a.pos.y - (a.pos.y - a.prev.y) * friction;
-              }
-            }
-          }
-          fixAnchor();
-        }
+      // Acumulador de física com passos fixos para garantir comportamento idêntico em qualquer taxa de Hz
+      physicsAccumulator += frameDelta;
+      while (physicsAccumulator >= FIXED_DT) {
+        stepPhysics(FIXED_DT);
+        physicsAccumulator -= FIXED_DT;
       }
 
       for (let i = 1; i <= linkCount; i += 1) {
@@ -478,15 +508,13 @@ export function ChainBackdrop3D({ theme }: ChainBackdrop3DProps) {
         className="
           pointer-events-auto
           absolute
-          md:right-48
-          right-8
-          translate-x-2/4
-
+          right-1/2
+          translate-x-1/2
+          top-0
           lg:left-1/2
           lg:right-auto
           lg:-translate-x-1/2
           lg:-translate-y-[5%]
-
           h-[60rem]
           w-[60rem]
           max-w-none

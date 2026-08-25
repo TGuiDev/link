@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { ArrowLeft, Github, Loader2, LockKeyhole, Mail, MessageCircle, Moon, Sun } from "lucide-react";
 
 type AuthMode = "login" | "signup" | "forgot" | "update-password";
@@ -44,7 +44,16 @@ export function AuthCard({ mode }: AuthCardProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlError = params.get("error");
+      if (urlError) {
+        return decodeURIComponent(urlError);
+      }
+    }
+    return "";
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") return "dark";
@@ -54,16 +63,6 @@ export function AuthCard({ mode }: AuthCardProps) {
 
     return "dark";
   });
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const urlError = params.get("error");
-      if (urlError) {
-        setError(decodeURIComponent(urlError));
-      }
-    }
-  }, []);
 
   function toggleTheme() {
     const nextTheme = theme === "light" ? "dark" : "light";

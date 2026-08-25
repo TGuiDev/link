@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 import { createApiKeyForUser } from "@/lib/api-keys";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getPublicBaseUrl, toLinkResponse } from "@/lib/links";
-import { getLinksCollection, getClickEventsCollection, ClickEventDocument } from "@/lib/mongodb";
+import { getLinksCollection, getClickEventsCollection, getUsersCollection, ClickEventDocument, ensureMongoIndexes } from "@/lib/mongodb";
 
 export async function GET(request: NextRequest) {
   const user = await getAuthenticatedUser(request);
@@ -12,6 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await ensureMongoIndexes();
     const linksCollection = await getLinksCollection();
     const clickEventsCollection = await getClickEventsCollection();
 
@@ -27,34 +29,51 @@ export async function GET(request: NextRequest) {
       events = await clickEventsCollection
         .find({ linkId: { $in: linkIds } })
         .sort({ createdAt: -1 })
-        .limit(500)
+        .limit(1000)
         .toArray();
     }
 
     const eventCountByLink = new Map<string, number>();
     const countryCounts = new Map<string, number>();
-    const locationCounts = new Map<string, number>();
     const referrerCounts = new Map<string, number>();
+    const deviceCounts = new Map<string, number>();
+    const osCounts = new Map<string, number>();
+    const browserCounts = new Map<string, number>();
 
     for (const event of events) {
       eventCountByLink.set(event.linkId, (eventCountByLink.get(event.linkId) ?? 0) + 1);
-      countryCounts.set(event.country ?? "Desconhecido", (countryCounts.get(event.country ?? "Desconhecido") ?? 0) + 1);
-      locationCounts.set(getLocationLabel(event), (locationCounts.get(getLocationLabel(event)) ?? 0) + 1);
 
-      const referrer = getReferrerLabel(event.referrer);
+      const country = event.country ?? "Desconhecido";
+      countryCounts.set(country, (countryCounts.get(country) ?? 0) + 1);
+
+      const referrer = event.referrerName || (event.referrer ? getFallbackReferrer(event.referrer) : "Acesso Direto");
       referrerCounts.set(referrer, (referrerCounts.get(referrer) ?? 0) + 1);
+
+      const device = event.device || "Desktop";
+      deviceCounts.set(device, (deviceCounts.get(device) ?? 0) + 1);
+
+      const os = event.os || "Outro";
+      osCounts.set(os, (osCounts.get(os) ?? 0) + 1);
+
+      const browser = event.browser || "Navegador";
+      browserCounts.set(browser, (browserCounts.get(browser) ?? 0) + 1);
     }
+
+    const usersCollection = await getUsersCollection();
+    const query = ObjectId.isValid(user.id) ? { _id: new ObjectId(user.id) } : { _id: user.id as unknown as ObjectId };
+    const userDoc = await usersCollection.findOne(query);
+    const apiKeyVersion = userDoc?.apiKeyVersion ?? 1;
 
     const totalClicks = userLinks.reduce((sum, link) => sum + link.clicks, 0);
 
     return NextResponse.json({
       user: {
         id: user.id,
-        email: user.email,
-        name: user.name,
-        avatarUrl: user.avatarUrl
+        email: userDoc?.email ?? user.email,
+        name: userDoc?.name ?? user.name ?? (user.email ? user.email.split("@")[0] : "Conta"),
+        avatarUrl: userDoc?.avatarUrl ?? user.avatarUrl ?? null
       },
-      apiKey: createApiKeyForUser(user.id),
+      apiKey: createApiKeyForUser(user.id, apiKeyVersion),
       summary: {
         links: userLinks.length,
         clicks: totalClicks,
@@ -67,16 +86,24 @@ export async function GET(request: NextRequest) {
         trackedEvents: eventCountByLink.get(link._id!.toString()) ?? 0
       })),
       countries: toRanking(countryCounts),
-      locations: toRanking(locationCounts),
       referrers: toRanking(referrerCounts),
-      recentEvents: events.slice(0, 20).map((event) => ({
+      devices: toRanking(deviceCounts),
+      operatingSystems: toRanking(osCounts),
+      browsers: toRanking(browserCounts),
+      recentEvents: events.slice(0, 50).map((event) => ({
         id: event._id!.toString(),
         linkId: event.linkId,
-        country: event.country ?? "Desconhecido",
+        country: event.country ?? "Brasil",
+        countryCode: event.countryCode ?? "BR",
         region: event.region,
         city: event.city,
         referrer: event.referrer,
-        userAgent: event.userAgent,
+        referrerName: event.referrerName || (event.referrer ? getFallbackReferrer(event.referrer) : "Acesso Direto"),
+        device: event.device || "Desktop",
+        os: event.os || "Outro",
+        browser: event.browser || "Navegador",
+        qr: Boolean(event.qr),
+        ip: event.ip || null,
         createdAt: event.createdAt.toISOString()
       })),
       baseUrl: getPublicBaseUrl()
@@ -88,36 +115,24 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function getLocationLabel(event: ClickEventDocument) {
-  if (event.city && event.region) {
-    return `${event.city}, ${event.region}`;
-  }
-
-  if (event.city) {
-    return event.city;
-  }
-
-  if (event.region && event.country) {
-    return `${event.region}, ${event.country}`;
-  }
-
-  return event.country ?? "Desconhecido";
-}
-
 function toRanking(map: Map<string, number>) {
   return Array.from(map.entries())
     .map(([label, value]) => ({ label, value }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
+    .slice(0, 10);
 }
 
-function getReferrerLabel(referrer: string | null) {
-  if (!referrer) {
-    return "Direto";
-  }
-
+function getFallbackReferrer(referrer: string) {
   try {
-    return new URL(referrer).hostname;
+    const host = new URL(referrer).hostname.replace(/^www\./i, "");
+    if (host.includes("google")) return "Google";
+    if (host.includes("instagram")) return "Instagram";
+    if (host.includes("twitter") || host.includes("t.co") || host.includes("x.com")) return "X / Twitter";
+    if (host.includes("linkedin")) return "LinkedIn";
+    if (host.includes("whatsapp")) return "WhatsApp";
+    if (host.includes("facebook")) return "Facebook";
+    if (host.includes("youtube")) return "YouTube";
+    return host;
   } catch {
     return "Outro";
   }

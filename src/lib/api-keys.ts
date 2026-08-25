@@ -13,18 +13,20 @@ export type AuthUser = {
 
 type ApiKeyPayload = {
   userId: string;
+  version: number;
   signature: string;
 };
 
-export function createApiKeyForUser(userId: string): string {
-  const payload = `${userId}.${signUserId(userId)}`;
+export function createApiKeyForUser(userId: string, version = 1): string {
+  const v = version || 1;
+  const payload = `${userId}.${v}.${signUserVersion(userId, v)}`;
   return `${API_KEY_PREFIX}${Buffer.from(payload, "utf8").toString("base64url")}`;
 }
 
 export async function getUserFromApiKey(apiKey: string): Promise<AuthUser | null> {
   const payload = parseApiKey(apiKey);
 
-  if (!payload || !isValidSignature(payload.userId, payload.signature)) {
+  if (!payload) {
     return null;
   }
 
@@ -37,6 +39,15 @@ export async function getUserFromApiKey(apiKey: string): Promise<AuthUser | null
     const user = await users.findOne(query);
 
     if (!user || !user._id) {
+      return null;
+    }
+
+    const currentVersion = user.apiKeyVersion ?? 1;
+    if (payload.version !== currentVersion) {
+      return null;
+    }
+
+    if (!isValidSignature(payload.userId, payload.version, payload.signature)) {
       return null;
     }
 
@@ -62,31 +73,48 @@ function parseApiKey(apiKey: string): ApiKeyPayload | null {
 
   try {
     const decoded = Buffer.from(apiKey.slice(API_KEY_PREFIX.length), "base64url").toString("utf8");
-    const separatorIndex = decoded.indexOf(".");
+    const parts = decoded.split(".");
 
-    if (separatorIndex <= 0) {
-      return null;
+    if (parts.length === 3) {
+      const [userId, versionStr, signature] = parts;
+      const version = parseInt(versionStr, 10);
+      if (!userId || isNaN(version) || !signature) return null;
+      return { userId, version, signature };
     }
 
-    return {
-      userId: decoded.slice(0, separatorIndex),
-      signature: decoded.slice(separatorIndex + 1)
-    };
+    // Suporte legado
+    if (parts.length === 2) {
+      const [userId, signature] = parts;
+      if (!userId || !signature) return null;
+      return { userId, version: 1, signature };
+    }
+
+    return null;
   } catch {
     return null;
   }
 }
 
-function signUserId(userId: string): string {
-  return createHmac("sha256", getApiKeySecret()).update(userId).digest("base64url");
+function signUserVersion(userId: string, version: number): string {
+  return createHmac("sha256", getApiKeySecret()).update(`${userId}.${version}`).digest("base64url");
 }
 
-function isValidSignature(userId: string, signature: string): boolean {
-  const expected = signUserId(userId);
+function isValidSignature(userId: string, version: number, signature: string): boolean {
+  const expected = signUserVersion(userId, version);
   const signatureBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
 
-  return signatureBuffer.length === expectedBuffer.length && timingSafeEqual(signatureBuffer, expectedBuffer);
+  if (signatureBuffer.length !== expectedBuffer.length) {
+    // Tenta assinatura legada se version for 1
+    if (version === 1) {
+      const legacyExpected = createHmac("sha256", getApiKeySecret()).update(userId).digest("base64url");
+      const legacyBuffer = Buffer.from(legacyExpected);
+      return signatureBuffer.length === legacyBuffer.length && timingSafeEqual(signatureBuffer, legacyBuffer);
+    }
+    return false;
+  }
+
+  return timingSafeEqual(signatureBuffer, expectedBuffer);
 }
 
 function getApiKeySecret(): string {

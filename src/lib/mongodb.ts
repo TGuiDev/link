@@ -14,10 +14,20 @@ export type ClickEventDocument = {
   _id?: ObjectId;
   linkId: string;
   country: string | null;
+  countryCode?: string | null;
   region: string | null;
   city: string | null;
   referrer: string | null;
+  referrerName?: string | null;
+  device?: string | null;
+  os?: string | null;
+  browser?: string | null;
   userAgent: string | null;
+  qr?: boolean;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  ip?: string | null;
   createdAt: Date;
 };
 
@@ -33,6 +43,7 @@ export type UserDocument = {
   passwordHash?: string | null;
   avatarUrl?: string | null;
   accounts?: UserAccount[];
+  apiKeyVersion?: number;
   resetToken?: string | null;
   resetTokenExpires?: Date | null;
   createdAt: Date;

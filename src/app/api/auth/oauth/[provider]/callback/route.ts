@@ -80,10 +80,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
         updatedAt: now
       };
 
-      if (!user.avatarUrl && profile.avatarUrl) {
+      if (profile.avatarUrl) {
         updateOps.avatarUrl = profile.avatarUrl;
       }
-      if (!user.name && profile.name) {
+      if (profile.name) {
         updateOps.name = profile.name;
       }
 
@@ -109,8 +109,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const sessionToken = await signSessionToken({
       userId,
       email: user.email,
-      name: user.name ?? profile.name,
-      avatarUrl: user.avatarUrl ?? profile.avatarUrl
+      name: profile.name || user.name || null,
+      avatarUrl: profile.avatarUrl || user.avatarUrl || null
     });
 
     const response = NextResponse.redirect(`${baseUrl}/dashboard`);

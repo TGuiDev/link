@@ -1,12 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import type { ReactNode } from "react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Check, ChevronDown, Copy, Download, Github, LayoutDashboard, LinkIcon, Loader2, LockKeyhole, LogOut, Moon, QrCode, Sun, Wand2 } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Check,
+  Copy,
+  Download,
+  ExternalLink,
+  Github,
+  Link2,
+  Loader2,
+  LockKeyhole,
+  QrCode,
+  RotateCcw,
+  Sparkles,
+  Zap
+} from "lucide-react";
 import { ChainBackdrop3D } from "@/components/chain-backdrop-3d";
-import { clearCachedNavbarUser, getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
+import { Navbar } from "@/components/navbar";
+import { getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
 import { createQrCodeUrl } from "@/lib/qrcode";
 
 type ShortenedLink = {
@@ -22,10 +38,6 @@ type PublicStats = {
   links: number;
 };
 
-const surface =
-  "border border-zinc-200 bg-white shadow-sm transition-colors duration-200 ease-out dark:border-white/10 dark:bg-zinc-950";
-const input =
-  "h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-zinc-950 outline-none transition-colors duration-200 ease-out focus:border-zinc-950 focus:ring-4 focus:ring-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-300 dark:focus:ring-emerald-300/10";
 const contributeUrl = "https://github.com/TGuiDev/link";
 const portfolioUrl = "https://guidev.site";
 
@@ -34,53 +46,41 @@ export function LinkCreator() {
   const [url, setUrl] = useState("");
   const [slug, setSlug] = useState("");
   const [mode, setMode] = useState<Mode>("random");
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [isThemeHydrated, setIsThemeHydrated] = useState(false);
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "dark";
+    const savedTheme = window.localStorage.getItem("link-theme");
+    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
+    return "dark";
+  });
   const [createdLink, setCreatedLink] = useState<ShortenedLink | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [navbarUser, setNavbarUser] = useState<NavbarUser | null>(cachedNavbarUser ?? null);
-  const [isCheckingUser, setIsCheckingUser] = useState(cachedNavbarUser === undefined);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [targetLinksCount, setTargetLinksCount] = useState<number | null>(null);
   const [displayedLinksCount, setDisplayedLinksCount] = useState(0);
   const displayedLinksCountRef = useRef(0);
 
-  // Sincronizar tema do localStorage após hidratação
-  useEffect(() => {
-    window.setTimeout(() => {
-      const savedTheme = window.localStorage.getItem("link-theme");
-      if (savedTheme === "dark" || savedTheme === "light") {
-        setTheme(savedTheme);
-      }
-      setIsThemeHydrated(true);
-    }, 0);
-  }, []);
-
   const canSubmit = useMemo(() => {
     return url.trim().length > 3 && (mode === "random" || slug.trim().length >= 3);
   }, [mode, slug, url]);
+
   const createdQrCodeUrl = useMemo(() => {
     if (!createdLink) return "";
 
-    return createQrCodeUrl(createdLink.shortUrl, {
-      size: 220,
+    return createQrCodeUrl(`${createdLink.shortUrl}?src=qr`, {
+      size: 280,
       foreground: theme === "dark" ? "FFFFFF" : "18181B",
       background: theme === "dark" ? "18181B" : "FFFFFF",
-      margin: 12
+      margin: 10
     });
   }, [createdLink, theme]);
 
   useEffect(() => {
     if (cachedNavbarUser === undefined) {
-      loadNavbarUser()
-        .then((user) => {
-          setNavbarUser(user);
-        })
-        .finally(() => {
-          setIsCheckingUser(false);
-        });
+      loadNavbarUser().then((user) => {
+        setNavbarUser(user);
+      });
     }
 
     fetchPublicStats().then((nextStats) => {
@@ -116,7 +116,7 @@ export function LinkCreator() {
 
     let animationFrame = 0;
     const startedAt = window.performance.now();
-    const duration = 700;
+    const duration = 800;
 
     function animate(now: number) {
       const progress = Math.min((now - startedAt) / duration, 1);
@@ -142,10 +142,13 @@ export function LinkCreator() {
     const nextTheme = theme === "light" ? "dark" : "light";
     setTheme(nextTheme);
     window.localStorage.setItem("link-theme", nextTheme);
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canSubmit || isLoading) return;
+
     setIsLoading(true);
     setError("");
     setCopied(false);
@@ -157,8 +160,8 @@ export function LinkCreator() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          url,
-          slug: mode === "custom" ? slug : undefined
+          url: url.trim(),
+          slug: mode === "custom" && slug.trim() ? slug.trim() : undefined
         })
       });
 
@@ -172,7 +175,7 @@ export function LinkCreator() {
       setTargetLinksCount((currentCount) => (currentCount === null ? currentCount : currentCount + 1));
       await navigator.clipboard.writeText(data.shortUrl);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
+      window.setTimeout(() => setCopied(false), 2000);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Erro inesperado.");
       setCreatedLink(null);
@@ -185,290 +188,334 @@ export function LinkCreator() {
     if (!createdLink) return;
     await navigator.clipboard.writeText(createdLink.shortUrl);
     setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    window.setTimeout(() => setCopied(false), 2000);
   }
 
-  async function signOut() {
+  async function downloadQrCode(qrDataUrl: string, linkSlug: string) {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      clearCachedNavbarUser();
-      setNavbarUser(null);
-      setIsMenuOpen(false);
+      const response = await fetch(qrDataUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `qrcode-${linkSlug}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(qrDataUrl, "_blank");
     }
+  }
+
+  function resetForm() {
+    setCreatedLink(null);
+    setUrl("");
+    setSlug("");
+    setError("");
   }
 
   return (
     <main className={theme === "dark" ? "dark" : ""} suppressHydrationWarning>
-      <section className="relative min-h-screen overflow-hidden bg-zinc-50 text-zinc-950 transition-colors duration-200 ease-out dark:bg-zinc-950 dark:text-white">
+      <section className="relative min-h-screen overflow-hidden bg-zinc-50/70 text-zinc-950 transition-colors duration-200 ease-out dark:bg-zinc-950 dark:text-white">
         <ChainBackdrop3D theme={theme} />
-        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-6 md:px-8">
-          <header className="flex items-center justify-between gap-4">
-            <Link href="/" className="flex items-center gap-3">
-              {isThemeHydrated && (
-                <Image
-                  className="h-10 w-10 rounded-lg object-contain"
-                  src={theme === "dark" ? "/Dark_Theme_Logo.svg" : "/Light_Theme_Logo.svg"}
-                  alt="Link"
-                  width={40}
-                  height={40}
-                  loading="eager"
-                />
-              )}
-              <div>
-                <p className="text-xl font-black">Link</p>
-                <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">link.guidev.site</p>
-              </div>
-            </Link>
 
-            <div className="flex items-center gap-2">
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 md:px-8">
+          <Navbar theme={theme} onToggleTheme={toggleTheme} user={navbarUser} />
+
+          <div className="grid flex-1 items-center gap-12 py-10 lg:grid-cols-[1.1fr_450px] lg:py-16">
+            {/* Lado Esquerdo: Hero Elegante e Charmoso */}
+            <div className="max-w-2xl space-y-6">
+              {/* Badge com Brilho Suave e Contador Animado */}
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-zinc-200/80 bg-white/80 px-3.5 py-1.5 text-xs font-semibold text-zinc-700 shadow-xs backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/80 dark:text-zinc-300">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+                </span>
+                <span>
+                  <strong className="font-extrabold text-zinc-950 dark:text-white">
+                    {targetLinksCount === null ? "..." : formatCompact(displayedLinksCount)}
+                  </strong>{" "}
+                  links criados em tempo real
+                </span>
+              </div>
+
+              {/* Título com Tipografia Imponente e Toque Charmoso */}
+              <h1 className="text-4xl font-black leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
+                Links curtos.{" "}
+                <span className="bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
+                  Controle total.
+                </span>
+              </h1>
+
+              {/* Descrição Suave */}
+              <p className="max-w-xl text-base sm:text-lg font-medium leading-relaxed text-zinc-600 dark:text-zinc-300">
+                Encurte links em segundos, personalize seus slugs, acompanhe métricas geolocalizadas em tempo real e integre diretamente com a sua aplicação via API REST.
+              </p>
+
+              {/* 3 Cards de Vantagens com Visual Premium */}
+              <div className="grid gap-3 pt-2 sm:grid-cols-3">
+                <FeatureCard
+                  icon={<Zap size={15} className="text-emerald-500" />}
+                  title="Sem login"
+                  description="Encurte instantâneo em 1 clique"
+                />
+                <FeatureCard
+                  icon={<LockKeyhole size={15} className="text-emerald-500" />}
+                  title="Slugs custom"
+                  description="Crie links com a sua marca"
+                />
+                <FeatureCard
+                  icon={<BarChart3 size={15} className="text-emerald-500" />}
+                  title="Analytics & QR"
+                  description="Métricas e QR Code em PNG"
+                />
+              </div>
+            </div>
+
+            {/* Lado Direito: Card do Encurtador Elegante com Vidro e Sombras */}
+            <div className="relative group">
+              <div className="rounded-2xl border border-zinc-200/90 bg-white/90 p-6 shadow-xl backdrop-blur-xl transition duration-300 hover:shadow-2xl dark:border-white/10 dark:bg-zinc-900/90 sm:p-7">
+                {!createdLink ? (
+                  <form className="space-y-4" onSubmit={onSubmit}>
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <Link2 size={16} className="text-emerald-500" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                          Encurtador de Link
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-medium text-zinc-400">Rápido & Seguro</span>
+                    </div>
+
+                    {/* Input de URL Original */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                        URL de Destino
+                      </label>
+                      <input
+                        className="h-11 w-full rounded-xl border border-zinc-200 bg-zinc-50/70 px-3.5 text-xs font-medium text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 dark:border-zinc-800 dark:bg-zinc-950/70 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/10"
+                        placeholder="https://meusite.com/sua-pagina"
+                        value={url}
+                        onChange={(event) => setUrl(event.target.value)}
+                        inputMode="url"
+                        required
+                      />
+                    </div>
+
+                    {/* Alternador de Modo: Aleatório vs Personalizado */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                        Formato do Link
+                      </label>
+                      <div className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-100 p-1 dark:bg-zinc-950">
+                        <ModeButton
+                          active={mode === "random"}
+                          onClick={() => setMode("random")}
+                          icon={<Sparkles size={14} />}
+                        >
+                          Aleatório
+                        </ModeButton>
+                        <ModeButton
+                          active={mode === "custom"}
+                          onClick={() => setMode("custom")}
+                          icon={<LockKeyhole size={14} />}
+                        >
+                          Personalizado
+                        </ModeButton>
+                      </div>
+                    </div>
+
+                    {/* Slug Personalizado */}
+                    {mode === "custom" && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                          Slug Personalizado
+                        </label>
+                        <div className="flex h-11 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/70 focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/10 dark:border-zinc-800 dark:bg-zinc-950/70 dark:focus-within:border-emerald-400 dark:focus-within:ring-emerald-400/10">
+                          <span className="flex h-full items-center border-r border-zinc-200 px-3 text-xs font-semibold text-zinc-400 dark:border-zinc-800">
+                            link.guidev.site/
+                          </span>
+                          <input
+                            className="h-full min-w-0 flex-1 bg-transparent px-3 text-xs font-semibold text-zinc-950 outline-none dark:text-white"
+                            placeholder="meu-slug"
+                            value={slug}
+                            onChange={(event) => setSlug(event.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {error && (
+                      <div className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700 dark:border-red-500/20 dark:bg-red-950/30 dark:text-red-300 animate-in fade-in duration-150">
+                        {error}
+                      </div>
+                    )}
+
+                    {/* Botão Encurtar */}
+                    <button
+                      type="submit"
+                      disabled={!canSubmit || isLoading}
+                      className="group flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-5 text-xs font-bold text-white shadow-md transition hover:bg-zinc-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="animate-spin" size={15} />
+                      ) : (
+                        <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+                      )}
+                      <span>Encurtar Link Agora</span>
+                    </button>
+                  </form>
+                ) : (
+                  /* Card de Resultado Sucesso Bonito e Limpo */
+                  <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
+                          <Check size={12} />
+                        </span>
+                        <span className="text-xs font-bold text-zinc-900 dark:text-white">
+                          Link criado com sucesso!
+                        </span>
+                      </div>
+                      <button
+                        onClick={resetForm}
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+                        type="button"
+                      >
+                        <RotateCcw size={11} />
+                        <span>Novo</span>
+                      </button>
+                    </div>
+
+                    {/* Campo de URL Curta */}
+                    <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 p-1.5 dark:border-zinc-800 dark:bg-zinc-950">
+                      <input
+                        readOnly
+                        className="h-9 min-w-0 flex-1 bg-transparent px-3 font-mono text-xs font-bold text-zinc-900 outline-none dark:text-white select-all"
+                        value={createdLink.shortUrl}
+                      />
+                      <button
+                        type="button"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-zinc-900 px-3 text-xs font-bold text-white transition hover:bg-zinc-800 active:scale-95 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                        onClick={copyLink}
+                      >
+                        {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                        <span>{copied ? "Copiado" : "Copiar"}</span>
+                      </button>
+                    </div>
+
+                    {/* QR Code */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3.5 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3.5 dark:border-zinc-800 dark:bg-zinc-950/60">
+                      <div className="grid h-28 w-28 flex-none place-items-center rounded-lg border border-zinc-200 bg-white p-1.5 shadow-2xs dark:border-zinc-800 dark:bg-zinc-900">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          className="h-full w-full object-contain"
+                          src={createdQrCodeUrl}
+                          alt={`QR Code para ${createdLink.shortUrl}`}
+                        />
+                      </div>
+
+                      <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
+                        <div>
+                          <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold text-zinc-900 dark:text-white">
+                            <QrCode size={14} className="text-emerald-500" />
+                            <span>QR Code Rastreável</span>
+                          </div>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                            Pronto para download ou compartilhamento em artes.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1.5 justify-center sm:justify-start">
+                          <button
+                            onClick={() => downloadQrCode(createdQrCodeUrl, createdLink.slug)}
+                            className="inline-flex h-7 items-center gap-1 rounded-md bg-zinc-900 px-2.5 text-[11px] font-bold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                            type="button"
+                          >
+                            <Download size={11} />
+                            <span>Baixar PNG</span>
+                          </button>
+                          <a
+                            href={createdLink.shortUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-zinc-200 bg-white px-2.5 text-[11px] font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          >
+                            <span>Testar Link</span>
+                            <ExternalLink size={11} />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Rodapé Elegante */}
+          <footer className="flex flex-col gap-4 border-t border-zinc-200/80 py-6 text-xs text-zinc-500 dark:border-white/10 dark:text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-zinc-900 dark:text-white">Link</span>
+              <span>•</span>
+              <span>
+                Feito com carinho por{" "}
+                <a
+                  className="font-bold text-zinc-900 underline decoration-zinc-300 underline-offset-4 transition hover:text-emerald-600 dark:text-white dark:decoration-white/20 dark:hover:text-emerald-300"
+                  href={portfolioUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  GUI.DEV
+                </a>
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 font-semibold">
               <Link
-                className="hidden h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-bold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-white/30 md:inline-flex"
+                className="inline-flex items-center gap-1.5 transition hover:text-zinc-950 dark:hover:text-white"
                 href="/documentacao"
               >
-                <BookOpen size={15} />
-                Documenta&ccedil;&atilde;o
+                <BookOpen size={13} />
+                <span>Documentação</span>
               </Link>
               <a
-                className="hidden h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 text-sm font-bold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-white/30 md:inline-flex"
+                className="inline-flex items-center gap-1.5 transition hover:text-zinc-950 dark:hover:text-white"
                 href={contributeUrl}
                 target="_blank"
                 rel="noreferrer"
               >
-                <Github size={15} />
-                Contribuir
-              </a>
-              {isCheckingUser ? (
-                <div className="flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 pr-3 dark:border-white/10 dark:bg-zinc-900">
-                  <span className="h-7 w-7 rounded-full bg-zinc-100 dark:bg-zinc-800" />
-                  <span className="hidden h-3 w-20 rounded-full bg-zinc-100 dark:bg-zinc-800 sm:block" />
-                </div>
-              ) : navbarUser ? (
-                <div className="relative">
-                  <button
-                    className="flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 pr-3 text-sm font-bold text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-white/30"
-                    onClick={() => setIsMenuOpen((current) => !current)}
-                    type="button"
-                  >
-                    {navbarUser.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img className="h-7 w-7 rounded-full object-cover" src={navbarUser.avatarUrl} alt="" />
-                    ) : (
-                      <span className="grid h-7 w-7 place-items-center rounded-full bg-zinc-100 text-xs font-black text-zinc-600 dark:bg-zinc-800 dark:text-zinc-200">
-                        {navbarUser.name.slice(0, 1).toUpperCase()}
-                      </span>
-                    )}
-                    <span className="hidden max-w-[140px] truncate sm:block">{navbarUser.name}</span>
-                    <ChevronDown size={15} />
-                  </button>
-
-                  {isMenuOpen ? (
-                    <div className="absolute right-0 z-20 mt-2 w-44 rounded-xl border border-zinc-200 bg-white p-1 shadow-lg dark:border-white/10 dark:bg-zinc-900">
-                      <Link
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                        href="/dashboard"
-                      >
-                        <LayoutDashboard size={15} />
-                        Dashboard
-                      </Link>
-                      <Link
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 md:hidden"
-                        href="/documentacao"
-                      >
-                        <BookOpen size={15} />
-                        Documenta&ccedil;&atilde;o
-                      </Link>
-                      <a
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800 md:hidden"
-                        href={contributeUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Github size={15} />
-                        Contribuir
-                      </a>
-                      <button
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-bold text-zinc-700 transition hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                        onClick={signOut}
-                        type="button"
-                      >
-                        <LogOut size={15} />
-                        Sair
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <Link
-                  className="hidden h-10 items-center rounded-lg bg-zinc-950 px-4 text-sm font-bold text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 sm:inline-flex"
-                  href="/login"
-                >
-                  Entrar
-                </Link>
-              )}
-              <button
-                type="button"
-                className="grid h-10 w-10 place-items-center rounded-lg border border-zinc-200 bg-white text-zinc-700 transition hover:border-zinc-400 dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-white/30"
-                onClick={toggleTheme}
-                aria-label="Alternar tema"
-                title="Alternar tema"
-              >
-                {isThemeHydrated && (theme === "dark" ? <Sun size={17} /> : <Moon size={17} />)}
-              </button>
-            </div>
-          </header>
-
-          <div className="grid flex-1 items-center gap-10 py-12 lg:grid-cols-[1fr_440px]">
-            <div className="max-w-2xl">
-              <HeroStat value={targetLinksCount === null ? "--" : formatCompact(displayedLinksCount)} />
-              <h1 className="text-5xl font-black leading-[0.96] tracking-normal sm:text-7xl">
-                Links curtos. Controle total.
-              </h1>
-              <p className="mt-5 max-w-xl text-lg font-medium leading-8 text-zinc-600 dark:text-zinc-300">
-                Crie links aleatorios ou personalizados, acompanhe acessos no painel e use a mesma estrutura via API.
-              </p>
-
-              <div className="mt-8 grid gap-3 text-sm font-bold text-zinc-600 sm:grid-cols-3 dark:text-zinc-300">
-                {["Sem login", "Slug custom", "Métricas"].map((item) => (
-                  <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-zinc-900" key={item}>
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className={`rounded-2xl p-5 ${surface}`}>
-              <form className="space-y-4" onSubmit={onSubmit}>
-                <label className="block space-y-2">
-                  <span className="text-sm font-bold">URL original</span>
-                  <input
-                    className={input}
-                    placeholder="https://guidev.site"
-                    value={url}
-                    onChange={(event) => setUrl(event.target.value)}
-                    inputMode="url"
-                  />
-                </label>
-
-                <div className="grid grid-cols-2 gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-900">
-                  <ModeButton active={mode === "random"} onClick={() => setMode("random")} icon={<Wand2 size={16} />}>
-                    Random
-                  </ModeButton>
-                  <ModeButton active={mode === "custom"} onClick={() => setMode("custom")} icon={<LockKeyhole size={16} />}>
-                    Custom
-                  </ModeButton>
-                </div>
-
-                <label className="block space-y-2">
-                  <span className="text-sm font-bold">Slug</span>
-                  <div className="flex overflow-hidden rounded-lg border border-zinc-200 bg-white focus-within:border-zinc-950 focus-within:ring-4 focus-within:ring-zinc-100 dark:border-white/10 dark:bg-zinc-900 dark:focus-within:border-emerald-300 dark:focus-within:ring-emerald-300/10">
-                    <span className="hidden h-12 items-center border-r border-zinc-200 px-3 text-sm font-bold text-zinc-400 dark:border-white/10 sm:flex">
-                      link.guidev.site/
-                    </span>
-                    <input
-                      className="h-12 min-w-0 flex-1 bg-transparent px-4 text-zinc-950 outline-none disabled:text-zinc-400 dark:text-white dark:disabled:text-zinc-500"
-                      disabled={mode === "random"}
-                      placeholder={mode === "random" ? "random" : ""}
-                      value={mode === "random" ? "" : slug}
-                      onChange={(event) => setSlug(event.target.value)}
-                    />
-                  </div>
-                </label>
-
-                {error ? (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-400/20 dark:bg-red-950/30 dark:text-red-200">
-                    {error}
-                  </div>
-                ) : null}
-
-                <button
-                  type="submit"
-                  disabled={!canSubmit || isLoading}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-zinc-950 px-5 text-sm font-black text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:bg-zinc-300 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
-                >
-                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : <LinkIcon size={18} />}
-                  Encurtar
-                </button>
-              </form>
-
-              {createdLink ? (
-                <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-400/20 dark:bg-emerald-950/20">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className="text-sm font-black text-emerald-900 dark:text-emerald-100">Link criado</span>
-                    <span className="text-xs font-bold text-emerald-700 dark:text-emerald-200">
-                      {copied ? "Copiado" : `/${createdLink.slug}`}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      readOnly
-                      className="h-11 min-w-0 flex-1 rounded-lg border border-emerald-200 bg-white px-3 text-sm font-bold text-zinc-950 outline-none dark:border-emerald-400/20 dark:bg-zinc-950 dark:text-white"
-                      value={createdLink.shortUrl}
-                    />
-                    <button
-                      type="button"
-                      className="grid h-11 w-11 flex-none place-items-center rounded-lg bg-zinc-950 text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-950"
-                      onClick={copyLink}
-                      aria-label="Copiar link"
-                      title="Copiar link"
-                    >
-                      {copied ? <Check size={18} /> : <Copy size={18} />}
-                    </button>
-                  </div>
-                  <div className="mt-4 flex flex-col gap-4 rounded-lg border border-emerald-200 bg-white p-3 dark:border-emerald-400/20 dark:bg-zinc-950 sm:flex-row sm:items-center">
-                    <div className="grid h-36 w-36 flex-none place-items-center rounded-lg border border-zinc-200 bg-white p-2 dark:border-white/10">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img className="h-full w-full object-contain" src={createdQrCodeUrl} alt={`QR Code para ${createdLink.shortUrl}`} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-sm font-black text-zinc-950 dark:text-white">
-                        <QrCode size={17} />
-                        QR Code
-                      </div>
-                      <p className="mt-2 text-sm font-medium leading-6 text-zinc-600 dark:text-zinc-300">
-                        Compartilhe o link também como imagem escaneável.
-                      </p>
-                      <a
-                        className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-zinc-950 px-3 text-xs font-black text-white transition hover:bg-zinc-700 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
-                        href={createdQrCodeUrl}
-                        download={`qrcode-${createdLink.slug}.png`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Download size={15} />
-                        Baixar PNG
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <footer className="flex flex-col gap-5 border-t border-zinc-200 py-6 text-sm text-zinc-500 dark:border-white/10 dark:text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-md">
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-zinc-950 dark:text-white">Link</p>
-              {/* <p className="mt-2 text-sm font-medium leading-6">Encurtador de links com m&eacute;tricas, API e QR Codes personalizados.</p> */}
-              <p className="mt-3 text-xs font-black uppercase tracking-[0.16em] text-zinc-400 dark:text-zinc-500">
-                Feito com <span className="text-rose-500">💖</span> por{" "}
-                <a className="text-zinc-950 underline decoration-zinc-300 underline-offset-4 transition hover:text-emerald-600 dark:text-white dark:decoration-white/20 dark:hover:text-emerald-300" href={portfolioUrl} target="_blank" rel="noreferrer">
-                  GUI.DEV
-                </a>
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 font-bold">
-              <Link className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 transition hover:border-zinc-400 hover:text-zinc-950 dark:border-white/10 dark:bg-zinc-900 dark:hover:border-white/30 dark:hover:text-white" href="/documentacao">
-                <BookOpen size={15} />
-                Documenta&ccedil;&atilde;o
-              </Link>
-              <a className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 transition hover:border-zinc-400 hover:text-zinc-950 dark:border-white/10 dark:bg-zinc-900 dark:hover:border-white/30 dark:hover:text-white" href={contributeUrl} target="_blank" rel="noreferrer">
-                <Github size={15} />
-                Contribuir
+                <Github size={13} />
+                <span>Código Aberto</span>
               </a>
             </div>
           </footer>
         </div>
       </section>
     </main>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  description
+}: {
+  icon: ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-xl border border-zinc-200/80 bg-white/70 p-3.5 shadow-2xs backdrop-blur-xs transition hover:border-zinc-300 hover:bg-white dark:border-white/10 dark:bg-zinc-900/60 dark:hover:border-white/20 dark:hover:bg-zinc-900">
+      <div className="flex items-center gap-2">
+        {icon}
+        <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{title}</h3>
+      </div>
+      <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+        {description}
+      </p>
+    </div>
   );
 }
 
@@ -486,25 +533,16 @@ function ModeButton({
   return (
     <button
       type="button"
-      className={`flex h-10 items-center justify-center gap-2 rounded-md text-sm font-bold transition ${
+      className={`flex h-9 items-center justify-center gap-1.5 rounded-lg text-xs font-bold transition ${
         active
-          ? "bg-white text-zinc-950 shadow-sm dark:bg-zinc-800 dark:text-white"
+          ? "bg-white text-zinc-950 shadow-xs dark:bg-zinc-800 dark:text-white font-semibold"
           : "text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
       }`}
       onClick={onClick}
     >
       {icon}
-      {children}
+      <span>{children}</span>
     </button>
-  );
-}
-
-function HeroStat({ value }: { value: string }) {
-  return (
-    <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-bold text-zinc-500 transition-colors duration-200 ease-out dark:border-white/10 dark:bg-zinc-900 dark:text-zinc-400">
-      <span className="text-base font-black text-zinc-950 dark:text-white">{value}</span>
-      links criados
-    </div>
   );
 }
 

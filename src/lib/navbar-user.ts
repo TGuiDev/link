@@ -13,7 +13,7 @@ export function getCachedNavbarUser() {
 }
 
 export function clearCachedNavbarUser() {
-  cachedNavbarUser = null;
+  cachedNavbarUser = undefined;
   pendingNavbarUserLoad = null;
 }
 
@@ -21,8 +21,8 @@ export function primeCachedNavbarUser(user: NavbarUser | null) {
   cachedNavbarUser = user;
 }
 
-export async function loadNavbarUser(): Promise<NavbarUser | null> {
-  if (cachedNavbarUser !== undefined) {
+export async function loadNavbarUser(forceRefresh = false): Promise<NavbarUser | null> {
+  if (!forceRefresh && cachedNavbarUser !== undefined) {
     return cachedNavbarUser;
   }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLinksCollection, getClickEventsCollection } from "@/lib/mongodb";
-import { getClickMetadata } from "@/lib/request-meta";
+import { extractClickMetadata } from "@/lib/tracker";
 
 type RouteContext = {
   params: Promise<{
@@ -27,15 +27,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const clickEvents = await getClickEventsCollection();
     const now = new Date();
 
-    // Incremento atômico de cliques e registro do evento de clique
-    await Promise.allSettled([
-      links.updateOne({ _id: link._id }, { $inc: { clicks: 1 }, $set: { updatedAt: now } }),
-      clickEvents.insertOne({
-        linkId: link._id!.toString(),
-        ...getClickMetadata(request),
-        createdAt: now
-      })
-    ]);
+    // Rastreamento assíncrono e incremento de clique de alta performance
+    extractClickMetadata(request)
+      .then((meta) =>
+        Promise.allSettled([
+          links.updateOne({ _id: link._id }, { $inc: { clicks: 1 }, $set: { updatedAt: now } }),
+          clickEvents.insertOne({
+            linkId: link._id!.toString(),
+            ...meta,
+            createdAt: now
+          })
+        ])
+      )
+      .catch((err) => console.error("Erro ao registrar evento de clique:", err));
 
     return NextResponse.redirect(link.url);
   } catch (error) {
