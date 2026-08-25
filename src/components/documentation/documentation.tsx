@@ -6,7 +6,6 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { BookOpen, Check, ChevronDown, Copy, KeyRound, LayoutDashboard, Loader2, LogOut, Moon, Sun, Terminal } from "lucide-react";
 import { clearCachedNavbarUser, getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
-import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 type Theme = "light" | "dark";
 
@@ -66,11 +65,13 @@ export function Documentation() {
   }
 
   async function signOut() {
-    const supabase = getSupabaseBrowser();
-    await supabase.auth.signOut();
-    clearCachedNavbarUser();
-    setNavbarUser(null);
-    setIsMenuOpen(false);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      clearCachedNavbarUser();
+      setNavbarUser(null);
+      setIsMenuOpen(false);
+    }
   }
 
   return (
@@ -334,7 +335,7 @@ export function Documentation() {
                     ["401", "API key ausente, inválida ou usuário não autenticado."],
                     ["404", "Link ou endpoint não encontrado."],
                     ["409", "Slug customizado já está em uso."],
-                    ["500", "Erro inesperado no servidor ou no Supabase."],
+                    ["500", "Erro inesperado no servidor ou no banco de dados."],
                     ["503", "Não foi possível gerar um slug randômico único."]
                   ]}
                 />

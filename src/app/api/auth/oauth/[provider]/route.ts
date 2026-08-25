@@ -1,0 +1,38 @@
+import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "node:crypto";
+import { getOAuthAuthorizationUrl, OAuthProvider } from "@/lib/oauth-providers";
+
+type RouteContext = {
+  params: Promise<{
+    provider: string;
+  }>;
+};
+
+const VALID_PROVIDERS = new Set<OAuthProvider>(["google", "github", "discord"]);
+
+export async function GET(request: NextRequest, context: RouteContext) {
+  const { provider } = await context.params;
+
+  if (!VALID_PROVIDERS.has(provider as OAuthProvider)) {
+    return NextResponse.json({ error: "Provedor OAuth inválido." }, { status: 400 });
+  }
+
+  try {
+    const state = randomBytes(16).toString("hex");
+    const authUrl = getOAuthAuthorizationUrl(provider as OAuthProvider, state);
+
+    const response = NextResponse.redirect(authUrl);
+    response.cookies.set(`oauth_state_${provider}`, state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 10 // 10 minutos
+    });
+
+    return response;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro ao iniciar OAuth.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

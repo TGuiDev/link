@@ -1,6 +1,6 @@
 # Link
 
-Encurtador de links feito com Next.js, Supabase e Tailwind CSS. O projeto inclui criação de links curtos, slugs customizados, dashboard autenticado, métricas, API com chave, documentação e QR Codes customizáveis.
+Encurtador de links feito com Next.js, MongoDB e Tailwind CSS. O projeto inclui criação de links curtos, slugs customizados, dashboard autenticado, métricas, API com chave, documentação e QR Codes customizáveis.
 
 ![Link preview](public/meta-banner/link.png)
 
@@ -15,7 +15,7 @@ Encurtador de links feito com Next.js, Supabase e Tailwind CSS. O projeto inclui
 - Documentação visual em `/documentacao`
 - QR Code com presets, logo central, texto, moldura e download em PNG
 - Metadata Open Graph/Twitter para previews sociais
-- Supabase Auth com email/senha e providers sociais
+- Autenticação própria com email/senha e providers sociais (Google, GitHub e Discord)
 
 ## Stack
 
@@ -23,7 +23,8 @@ Encurtador de links feito com Next.js, Supabase e Tailwind CSS. O projeto inclui
 - React
 - TypeScript
 - Tailwind CSS
-- Supabase Auth, Database e Realtime
+- MongoDB (Database)
+- Jose & Bcryptjs (Autenticação JWT segura & Hash de senhas)
 - lucide-react
 
 ## Rodando Localmente
@@ -36,17 +37,26 @@ cd link
 npm install
 ```
 
-Crie um projeto no Supabase e execute o SQL em [database/schema.sql](database/schema.sql) pelo SQL Editor.
-
-Depois crie um arquivo `.env.local`:
+Crie um arquivo `.env` ou `.env.local`:
 
 ```bash
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-API_KEY_SECRET=use-a-long-random-secret
+
+# Conexão MongoDB (Atlas ou Local)
+MONGODB_URI=mongodb://localhost:27017/link
+MONGODB_DB=link
+
+# Chaves Secretas
+AUTH_SECRET=use-a-long-random-secret-for-jwt-session
+API_KEY_SECRET=use-a-long-random-secret-for-api-keys
+
+# OAuth (Opcional)
+AUTH_GOOGLE_ID=
+AUTH_GOOGLE_SECRET=
+AUTH_GITHUB_ID=
+AUTH_GITHUB_SECRET=
+AUTH_DISCORD_ID=
+AUTH_DISCORD_SECRET=
 ```
 
 Inicie o servidor:
@@ -61,27 +71,15 @@ Acesse:
 http://localhost:3000
 ```
 
-## Configurando o Supabase
+## Configurando OAuth (Google, GitHub, Discord)
 
-No Supabase, habilite Authentication com email/senha. Em desenvolvimento, configure:
+Para habilitar login social, crie as aplicações nos consoles de desenvolvedores e adicione as Redirect/Callback URLs:
 
-```txt
-Site URL:
-http://localhost:3000
+- **Google**: `http://localhost:3000/api/auth/oauth/google/callback`
+- **GitHub**: `http://localhost:3000/api/auth/oauth/github/callback`
+- **Discord**: `http://localhost:3000/api/auth/oauth/discord/callback`
 
-Redirect URLs:
-http://localhost:3000/auth/callback
-http://localhost:3000/nova-senha
-```
-
-Em produção, adicione também:
-
-```txt
-https://seu-dominio.com/auth/callback
-https://seu-dominio.com/nova-senha
-```
-
-Para login social, habilite os providers desejados em Authentication > Providers. O app já funciona com o fluxo do Supabase; cada provider precisa do client id/secret criado no console correspondente.
+Em produção, troque `http://localhost:3000` pelo seu domínio principal (ex: `https://link.guidev.site/api/auth/oauth/google/callback`).
 
 ## Rotas
 
@@ -103,8 +101,8 @@ src/app/              Rotas, páginas e endpoints do Next.js
 src/components/       Componentes de interface reutilizados pelas telas
 src/components/dashboard/ Dashboard autenticado
 src/components/documentation/ Documentação visual da API
-src/lib/              Regras de domínio, Supabase, API keys e helpers
-database/             Schema SQL do Supabase
+src/lib/              Regras de domínio, MongoDB, Auth, API keys e helpers
+database/             Scripts de configuração e índices do MongoDB
 public/               Logos, imagens de preview e assets estáticos
 .github/              Templates de issue e pull request
 ```
@@ -183,7 +181,7 @@ Resposta:
 
 ```json
 {
-  "id": "4f5b1d1a-7f26-4e49-9f4d-1f6b10e7725d",
+  "id": "673f4e29...",
   "slug": "portfolio",
   "url": "https://guidev.site/",
   "shortUrl": "https://link.guidev.site/portfolio",
@@ -235,28 +233,22 @@ No dashboard, cada link pode gerar um QR Code customizado com:
 
 ## Deploy
 
-O deploy recomendado é na Vercel.
+O deploy recomendado é na Vercel com banco MongoDB Atlas.
 
 Configure as variáveis de ambiente no painel da Vercel:
 
 ```bash
 NEXT_PUBLIC_APP_URL=https://seu-dominio.com
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-API_KEY_SECRET=use-a-long-random-secret
-```
-
-Depois configure no Supabase:
-
-```txt
-Site URL:
-https://seu-dominio.com
-
-Redirect URLs:
-https://seu-dominio.com/auth/callback
-https://seu-dominio.com/nova-senha
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/link?retryWrites=true&w=majority
+MONGODB_DB=link
+AUTH_SECRET=sua-chave-secreta-forte
+API_KEY_SECRET=sua-chave-secreta-forte
+AUTH_GOOGLE_ID=...
+AUTH_GOOGLE_SECRET=...
+AUTH_GITHUB_ID=...
+AUTH_GITHUB_SECRET=...
+AUTH_DISCORD_ID=...
+AUTH_DISCORD_SECRET=...
 ```
 
 ## Segurança
@@ -266,8 +258,7 @@ Antes de publicar o repositório:
 - Nunca commite `.env` ou `.env.local`
 - Rode `git status` antes do commit
 - Troque chaves expostas acidentalmente
-- Mantenha `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor
-- Use um `API_KEY_SECRET` forte em produção
+- Use um `AUTH_SECRET` e `API_KEY_SECRET` fortes em produção
 
 ## Scripts
 

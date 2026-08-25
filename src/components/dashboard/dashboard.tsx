@@ -37,9 +37,7 @@ import {
   Wand2,
   X
 } from "lucide-react";
-import type { RealtimeChannel, User } from "@supabase/supabase-js";
 import { clearCachedNavbarUser, getCachedNavbarUser, primeCachedNavbarUser, type NavbarUser } from "@/lib/navbar-user";
-import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { createQrCodeUrl, normalizeHex } from "@/lib/qrcode";
 
 type DashboardData = {
@@ -199,52 +197,16 @@ export function Dashboard() {
   const qrReadability = useMemo(() => getQrReadability(qrCustomization), [qrCustomization]);
 
   useEffect(() => {
-    let refreshTimeout: number | null = null;
-    let channel: RealtimeChannel | null = null;
-    const supabase = getSupabaseBrowser();
-
-    async function subscribeToDashboardChanges() {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData.session?.user ?? null;
-
-      if (!user) return;
-
-      hydrateDashboardUser(user);
-
-      channel = supabase
-        .channel(`dashboard-links-${user.id}-${crypto.randomUUID()}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "links",
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            if (refreshTimeout) {
-              window.clearTimeout(refreshTimeout);
-            }
-
-            refreshTimeout = window.setTimeout(() => {
-              loadDashboard({ silent: true });
-            }, 250);
-          }
-        )
-        .subscribe();
-    }
-
     loadDashboard();
-    subscribeToDashboardChanges();
+
+    const interval = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadDashboard({ silent: true });
+      }
+    }, 8000);
 
     return () => {
-      if (refreshTimeout) {
-        window.clearTimeout(refreshTimeout);
-      }
-
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      window.clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -263,15 +225,7 @@ export function Dashboard() {
     window.localStorage.setItem("link-theme", nextTheme);
   }
 
-  async function getAccessToken() {
-    const supabase = getSupabaseBrowser();
-    const { data: sessionData } = await supabase.auth.getSession();
-    hydrateDashboardUser(sessionData.session?.user ?? null);
-
-    return sessionData.session?.access_token ?? null;
-  }
-
-  function hydrateDashboardUser(user: User | null) {
+  function hydrateDashboardUser(user: NavbarUser | null) {
     if (!user) {
       setDashboardUser(null);
       clearCachedNavbarUser();
@@ -279,7 +233,7 @@ export function Dashboard() {
     }
 
     primeCachedNavbarUser(user);
-    setDashboardUser(getCachedNavbarUser() ?? null);
+    setDashboardUser(user);
   }
 
   async function loadDashboard(options?: { silent?: boolean }) {
@@ -289,34 +243,37 @@ export function Dashboard() {
 
     setError("");
 
-    const token = await getAccessToken();
+    try {
+      const response = await fetch("/api/dashboard");
+      const payload = await response.json();
 
-    if (!token) {
-      window.location.href = "/login";
-      return;
-    }
-
-    const response = await fetch("/api/dashboard", {
-      headers: {
-        Authorization: `Bearer ${token}`
+      if (!response.ok) {
+        if (response.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        setError(payload.error ?? "Não foi possível carregar o painel.");
+        if (!options?.silent) {
+          setIsLoading(false);
+        }
+        return;
       }
-    });
 
-    const payload = await response.json();
-
-    if (!response.ok) {
-      setError(payload.error ?? "Não foi possível carregar o painel.");
+      setData(payload);
+      if (payload.user) {
+        hydrateDashboardUser({
+          id: payload.user.id,
+          email: payload.user.email,
+          name: payload.user.name ?? payload.user.email?.split("@")[0] ?? "Usuario",
+          avatarUrl: payload.user.avatarUrl ?? null
+        });
+      }
+    } catch {
+      setError("Erro ao conectar com o servidor.");
+    } finally {
       if (!options?.silent) {
         setIsLoading(false);
       }
-
-      return;
-    }
-
-    setData(payload);
-
-    if (!options?.silent) {
-      setIsLoading(false);
     }
   }
 
@@ -325,37 +282,45 @@ export function Dashboard() {
     setIsCreating(true);
     setError("");
 
-    const token = await getAccessToken();
+    try {
+      const response = await fetch("/api/links", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          url,
+          slug: custom ? slug : undefined
+        })
+      });
 
-    if (!token) {
+      const payload = await response.json();
+      setIsCreating(false);
+
+      if (!response.ok) {
+        setError(payload.error ?? "Não foi possível criar o link.");
+        return;
+      }
+
+      setUrl("");
+      setSlug("");
+      await loadDashboard({ silent: true });
+      await copy(payload.shortUrl);
+    } catch {
+      setIsCreating(false);
+      setError("Erro ao criar o link.");
+    }
+  }
+
+  async function signOut() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      clearCachedNavbarUser();
+      setDashboardUser(null);
+      setIsMenuOpen(false);
       window.location.href = "/login";
-      return;
     }
-
-    const response = await fetch("/api/links", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        url,
-        slug: custom ? slug : undefined
-      })
-    });
-
-    const payload = await response.json();
-    setIsCreating(false);
-
-    if (!response.ok) {
-      setError(payload.error ?? "Não foi possível criar o link.");
-      return;
-    }
-
-    setUrl("");
-    setSlug("");
-    await loadDashboard({ silent: true });
-    await copy(payload.shortUrl);
   }
 
   async function copy(value: string) {
@@ -463,12 +428,6 @@ export function Dashboard() {
     }
   }
 
-  async function signOut() {
-    const supabase = getSupabaseBrowser();
-    await supabase.auth.signOut();
-    clearCachedNavbarUser();
-    window.location.href = "/";
-  }
 
   return (
     <main className={theme === "dark" ? "dark" : ""}>

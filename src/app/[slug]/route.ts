@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getLinksCollection, getClickEventsCollection } from "@/lib/mongodb";
 import { getClickMetadata } from "@/lib/request-meta";
 
 type RouteContext = {
@@ -10,11 +10,36 @@ type RouteContext = {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
-  const supabase = getSupabaseAdmin();
 
-  const { data, error } = await supabase.from("links").select("id,url").eq("slug", slug).single();
+  try {
+    const links = await getLinksCollection();
+    const link = await links.findOne({ slug });
 
-  if (error || !data) {
+    if (!link) {
+      return new Response(notFoundHtml(slug), {
+        status: 404,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8"
+        }
+      });
+    }
+
+    const clickEvents = await getClickEventsCollection();
+    const now = new Date();
+
+    // Incremento atômico de cliques e registro do evento de clique
+    await Promise.allSettled([
+      links.updateOne({ _id: link._id }, { $inc: { clicks: 1 }, $set: { updatedAt: now } }),
+      clickEvents.insertOne({
+        linkId: link._id!.toString(),
+        ...getClickMetadata(request),
+        createdAt: now
+      })
+    ]);
+
+    return NextResponse.redirect(link.url);
+  } catch (error) {
+    console.error("Erro no redirecionamento do slug:", error);
     return new Response(notFoundHtml(slug), {
       status: 404,
       headers: {
@@ -22,14 +47,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
       }
     });
   }
-
-  await supabase.rpc("increment_link_clicks", { link_slug: slug });
-  await supabase.from("link_click_events").insert({
-    link_id: data.id,
-    ...getClickMetadata(request)
-  });
-
-  return NextResponse.redirect(data.url);
 }
 
 function notFoundHtml(slug: string) {
@@ -91,9 +108,6 @@ function notFoundHtml(slug: string) {
       }
       .copy {
         text-align: left;
-      }
-      .illustration {
-        color: #d4d4d8;
       }
       .illustration svg {
         width: 100%;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateSlug, normalizeUrl, assertValidCustomSlug, toLinkResponse } from "@/lib/links";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getLinksCollection, getAppStatsCollection, ensureMongoIndexes } from "@/lib/mongodb";
 import { getAuthenticatedUser } from "@/lib/auth";
 
 type CreateLinkPayload = {
@@ -11,50 +11,76 @@ type CreateLinkPayload = {
 
 export async function POST(request: NextRequest) {
   try {
+    await ensureMongoIndexes();
     const body = (await request.json()) as CreateLinkPayload;
     const originalUrl = normalizeUrl(body.url ?? "");
     const requestedSlug = (body.customSlug ?? body.slug ?? "").trim();
-    const supabase = getSupabaseAdmin();
     const user = await getAuthenticatedUser(request);
-    const owner = user ? { user_id: user.id } : {};
+    const userId = user?.id ?? null;
+    const links = await getLinksCollection();
+    const appStats = await getAppStatsCollection();
+    const now = new Date();
 
     if (requestedSlug) {
       assertValidCustomSlug(requestedSlug);
 
-      const { data, error } = await supabase
-        .from("links")
-        .insert({ slug: requestedSlug, url: originalUrl, ...owner })
-        .select("id,slug,url,clicks,created_at,user_id")
-        .single();
+      try {
+        const result = await links.insertOne({
+          userId,
+          slug: requestedSlug,
+          url: originalUrl,
+          clicks: 0,
+          createdAt: now,
+          updatedAt: now
+        });
 
-      if (error?.code === "23505") {
-        return NextResponse.json({ error: "Esse link customizado já está em uso." }, { status: 409 });
+        await appStats.updateOne(
+          { _id: "global" },
+          { $inc: { totalLinks: 1 }, $set: { updatedAt: now } },
+          { upsert: true }
+        );
+
+        return NextResponse.json(
+          { ...toLinkResponse(requestedSlug, originalUrl, 0), id: result.insertedId.toString() },
+          { status: 201 }
+        );
+      } catch (error: unknown) {
+        if (typeof error === "object" && error !== null && "code" in error && (error as { code: number }).code === 11000) {
+          return NextResponse.json({ error: "Esse link customizado já está em uso." }, { status: 409 });
+        }
+        throw error;
       }
-
-      if (error || !data) {
-        throw error ?? new Error("Não foi possível criar o link.");
-      }
-
-      return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), id: data.id }, { status: 201 });
     }
 
     for (let attempt = 0; attempt < 6; attempt += 1) {
       const slug = generateSlug(attempt > 3 ? 9 : 7);
-      const { data, error } = await supabase
-        .from("links")
-        .insert({ slug, url: originalUrl, ...owner })
-        .select("id,slug,url,clicks,created_at,user_id")
-        .single();
 
-      if (error?.code === "23505") {
-        continue;
+      try {
+        const result = await links.insertOne({
+          userId,
+          slug,
+          url: originalUrl,
+          clicks: 0,
+          createdAt: now,
+          updatedAt: now
+        });
+
+        await appStats.updateOne(
+          { _id: "global" },
+          { $inc: { totalLinks: 1 }, $set: { updatedAt: now } },
+          { upsert: true }
+        );
+
+        return NextResponse.json(
+          { ...toLinkResponse(slug, originalUrl, 0), id: result.insertedId.toString() },
+          { status: 201 }
+        );
+      } catch (error: unknown) {
+        if (typeof error === "object" && error !== null && "code" in error && (error as { code: number }).code === 11000) {
+          continue;
+        }
+        throw error;
       }
-
-      if (error || !data) {
-        throw error ?? new Error("Não foi possível criar o link.");
-      }
-
-      return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), id: data.id }, { status: 201 });
     }
 
     return NextResponse.json({ error: "Não foi possível gerar um link único. Tente novamente." }, { status: 503 });

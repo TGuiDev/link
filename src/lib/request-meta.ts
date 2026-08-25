@@ -6,7 +6,7 @@ export function getClickMetadata(request: NextRequest) {
     region: getHeader(request, ["x-vercel-ip-country-region", "cf-region", "cf-region-code"]),
     city: getHeader(request, ["x-vercel-ip-city", "cf-ipcity"]),
     referrer: normalizeHeader(request.headers.get("referer")),
-    user_agent: normalizeHeader(request.headers.get("user-agent"))
+    userAgent: normalizeHeader(request.headers.get("user-agent"))
   };
 }
 
@@ -27,6 +27,10 @@ function normalizeHeader(value: string | null) {
     return null;
   }
 
-  const decoded = decodeURIComponent(value);
-  return decoded.slice(0, 500);
+  try {
+    const decoded = decodeURIComponent(value);
+    return decoded.slice(0, 500);
+  } catch {
+    return value.slice(0, 500);
+  }
 }

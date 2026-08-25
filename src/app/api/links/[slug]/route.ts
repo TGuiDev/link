@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublicBaseUrl, toLinkResponse } from "@/lib/links";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getLinksCollection } from "@/lib/mongodb";
 
 type RouteContext = {
   params: Promise<{
@@ -12,18 +12,17 @@ export async function GET(_request: Request, context: RouteContext) {
   const { slug } = await context.params;
 
   try {
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("links")
-      .select("slug,url,clicks,created_at")
-      .eq("slug", slug)
-      .single();
+    const links = await getLinksCollection();
+    const link = await links.findOne({ slug });
 
-    if (error || !data) {
+    if (!link) {
       return NextResponse.json({ error: "Link não encontrado." }, { status: 404 });
     }
 
-    return NextResponse.json({ ...toLinkResponse(data.slug, data.url, data.clicks), createdAt: data.created_at });
+    return NextResponse.json({
+      ...toLinkResponse(link.slug, link.url, link.clicks),
+      createdAt: link.createdAt.toISOString()
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado.";
     return NextResponse.json({ error: message, baseUrl: getPublicBaseUrl() }, { status: 500 });

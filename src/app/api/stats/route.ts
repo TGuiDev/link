@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getAppStatsCollection, getLinksCollection } from "@/lib/mongodb";
 
 export async function GET() {
-  const supabase = getSupabaseAdmin();
+  try {
+    const appStats = await getAppStatsCollection();
+    const stats = await appStats.findOne({ _id: "global" });
 
-  const { data: stats, error: statsError } = await supabase.from("app_stats").select("total_links").eq("id", "global").single();
-
-  if (statsError) {
-    const { count: linksCount, error: linksError } = await supabase.from("links").select("id", { count: "exact", head: true });
-
-    if (linksError) {
-      return NextResponse.json({ error: linksError.message }, { status: 500 });
+    if (stats && typeof stats.totalLinks === "number") {
+      return NextResponse.json({ links: stats.totalLinks }, { headers: cacheHeaders });
     }
 
-    return NextResponse.json({ links: linksCount ?? 0 }, { headers: cacheHeaders });
-  }
+    const links = await getLinksCollection();
+    const count = await links.countDocuments();
 
-  return NextResponse.json({ links: stats.total_links ?? 0 }, { headers: cacheHeaders });
+    return NextResponse.json({ links: count }, { headers: cacheHeaders });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro ao carregar estatísticas.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 const cacheHeaders = {

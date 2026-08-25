@@ -7,7 +7,6 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { BookOpen, Check, ChevronDown, Copy, Download, Github, LayoutDashboard, LinkIcon, Loader2, LockKeyhole, LogOut, Moon, QrCode, Sun, Wand2 } from "lucide-react";
 import { ChainBackdrop3D } from "@/components/chain-backdrop-3d";
 import { clearCachedNavbarUser, getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
-import { getSupabaseBrowser } from "@/lib/supabase-browser";
 import { createQrCodeUrl } from "@/lib/qrcode";
 
 type ShortenedLink = {
@@ -92,26 +91,18 @@ export function LinkCreator() {
   }, [cachedNavbarUser]);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowser();
-    const channel = supabase
-      .channel("public-link-stats")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "app_stats",
-          filter: "id=eq.global"
-        },
-        (payload) => {
-          const nextTotal = Number((payload.new as { total_links?: number }).total_links ?? 0);
-          setTargetLinksCount(nextTotal);
-        }
-      )
-      .subscribe();
+    const interval = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchPublicStats().then((nextStats) => {
+          if (nextStats) {
+            setTargetLinksCount(nextStats.links);
+          }
+        });
+      }
+    }, 8000);
 
     return () => {
-      supabase.removeChannel(channel);
+      window.clearInterval(interval);
     };
   }, []);
 
@@ -160,19 +151,11 @@ export function LinkCreator() {
     setCopied(false);
 
     try {
-      const supabase = getSupabaseBrowser();
-      const { data: sessionData } = await supabase.auth.getSession();
-      const headers: HeadersInit = {
-        "Content-Type": "application/json"
-      };
-
-      if (sessionData.session?.access_token) {
-        headers.Authorization = `Bearer ${sessionData.session.access_token}`;
-      }
-
       const response = await fetch("/api/links", {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           url,
           slug: mode === "custom" ? slug : undefined
@@ -206,11 +189,13 @@ export function LinkCreator() {
   }
 
   async function signOut() {
-    const supabase = getSupabaseBrowser();
-    await supabase.auth.signOut();
-    clearCachedNavbarUser();
-    setNavbarUser(null);
-    setIsMenuOpen(false);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      clearCachedNavbarUser();
+      setNavbarUser(null);
+      setIsMenuOpen(false);
+    }
   }
 
   return (

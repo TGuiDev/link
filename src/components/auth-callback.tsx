@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 export function AuthCallback() {
   const [message, setMessage] = useState("Confirmando acesso...");
@@ -12,15 +11,8 @@ export function AuthCallback() {
   useEffect(() => {
     async function finishAuth() {
       try {
-        const supabase = getSupabaseBrowser();
         const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
-        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-        const urlError =
-          url.searchParams.get("error_description") ??
-          url.searchParams.get("error") ??
-          hashParams.get("error_description") ??
-          hashParams.get("error");
+        const urlError = url.searchParams.get("error_description") ?? url.searchParams.get("error");
 
         if (urlError) {
           setHasError(true);
@@ -28,31 +20,15 @@ export function AuthCallback() {
           return;
         }
 
-        if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(code);
+        const response = await fetch("/api/auth/me");
+        const data = await response.json();
 
-          if (error) {
-            setHasError(true);
-            setMessage(error.message);
-            return;
-          }
-        }
-
-        const { data, error } = await supabase.auth.getSession();
-
-        if (error) {
-          setHasError(true);
-          setMessage(error.message);
+        if (data.user) {
+          window.location.replace("/dashboard");
           return;
         }
 
-        if (!data.session) {
-          setHasError(true);
-          setMessage("Login confirmado, mas a sessão não foi criada no navegador. Verifique as Redirect URLs do Supabase.");
-          return;
-        }
-
-        window.location.replace("/dashboard");
+        window.location.replace("/login");
       } catch (callbackError) {
         setHasError(true);
         setMessage(callbackError instanceof Error ? callbackError.message : "Não foi possível concluir o login.");
