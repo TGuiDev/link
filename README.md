@@ -233,9 +233,11 @@ No dashboard, cada link pode gerar um QR Code customizado com:
 
 ## Deploy
 
-O deploy recomendado é na Vercel com banco MongoDB Atlas.
+O deploy pode ser feito na **Vercel** ou em plataformas com **Nixpacks** (como **Coolify**, **Railway**, **Dokploy**, **Easypanel**):
 
-Configure as variáveis de ambiente no painel da Vercel:
+- O arquivo [nixpacks.toml](nixpacks.toml) já está configurado na raiz com Node.js 22 e build otimizado.
+
+Configure as variáveis de ambiente no painel da sua hospedagem:
 
 ```bash
 NEXT_PUBLIC_APP_URL=https://seu-dominio.com
