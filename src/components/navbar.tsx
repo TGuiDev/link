@@ -16,8 +16,7 @@ import {
   User as UserIcon
 } from "lucide-react";
 import { clearCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
-
-type Theme = "light" | "dark";
+import { useAppTheme, type Theme } from "@/lib/theme";
 
 type NavbarProps = {
   theme?: Theme;
@@ -31,20 +30,12 @@ export function Navbar({ theme: parentTheme, onToggleTheme, user: parentUser }: 
   const pathname = usePathname();
   const [internalUser, setInternalUser] = useState<NavbarUser | null>(null);
   const [isCheckingUser, setIsCheckingUser] = useState(parentUser === undefined);
+  const [hookTheme, toggleHookTheme] = useAppTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [internalTheme, setInternalTheme] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = window.localStorage.getItem("link-theme");
-      if (savedTheme === "dark" || savedTheme === "light") {
-        return savedTheme;
-      }
-    }
-    return "dark";
-  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Determinar o tema e usuário ativos
-  const currentTheme = parentTheme ?? internalTheme;
+  const currentTheme = parentTheme ?? hookTheme;
   const user = parentUser !== undefined ? parentUser : internalUser;
 
   useEffect(() => {
@@ -88,12 +79,7 @@ export function Navbar({ theme: parentTheme, onToggleTheme, user: parentUser }: 
     if (onToggleTheme) {
       onToggleTheme();
     } else {
-      const next = internalTheme === "light" ? "dark" : "light";
-      setInternalTheme(next);
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("link-theme", next);
-        document.documentElement.classList.toggle("dark", next === "dark");
-      }
+      toggleHookTheme();
     }
   }
 
@@ -141,10 +127,6 @@ export function Navbar({ theme: parentTheme, onToggleTheme, user: parentUser }: 
         <div className="hidden items-center gap-1.5 md:flex">
           <NavLink href="/" active={pathname === "/"}>
             Início
-          </NavLink>
-
-          <NavLink href="/dashboard" active={pathname === "/dashboard"}>
-            Dashboard
           </NavLink>
 
           <NavLink href="/documentacao" active={pathname === "/documentacao"}>

@@ -33,6 +33,7 @@ import {
 import { Navbar } from "@/components/navbar";
 import { getCachedNavbarUser, primeCachedNavbarUser, type NavbarUser } from "@/lib/navbar-user";
 import { createQrCodeUrl } from "@/lib/qrcode";
+import { useAppTheme } from "@/lib/theme";
 
 type RankingItem = {
   label: string;
@@ -87,7 +88,6 @@ type DashboardData = {
   recentEvents: RecentEvent[];
 };
 
-type Theme = "light" | "dark";
 type ViewMode = "links" | "analytics" | "api";
 type SortOption = "newest" | "clicks" | "alphabetical";
 type CodeLang = "curl" | "javascript" | "python";
@@ -131,12 +131,7 @@ export function Dashboard() {
   const [deleteModal, setDeleteModal] = useState<{ slug: string; shortUrl: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-    const savedTheme = window.localStorage.getItem("link-theme");
-    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
-    return "dark";
-  });
+  const [theme, toggleTheme] = useAppTheme();
   const [dashboardUser, setDashboardUser] = useState<NavbarUser | null>(() => getCachedNavbarUser() ?? null);
 
   useEffect(() => {
@@ -203,12 +198,7 @@ export function Dashboard() {
     }
   }
 
-  function toggleTheme() {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    window.localStorage.setItem("link-theme", nextTheme);
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-  }
+
 
   async function copy(value: string) {
     await navigator.clipboard.writeText(value);

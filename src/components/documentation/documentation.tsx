@@ -19,8 +19,8 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
+import { useAppTheme } from "@/lib/theme";
 
-type Theme = "light" | "dark";
 type Language = "curl" | "javascript" | "python" | "php";
 
 const baseUrl = "https://link.guidev.site";
@@ -77,12 +77,7 @@ const docNavigation: DocNavCategory[] = [
 
 export function Documentation() {
   const cachedNavbarUser = getCachedNavbarUser();
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-    const savedTheme = window.localStorage.getItem("link-theme");
-    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
-    return "dark";
-  });
+  const [theme, toggleTheme] = useAppTheme();
 
   const [activeSection, setActiveSection] = useState("visao-geral");
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,12 +115,7 @@ export function Documentation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  function toggleTheme() {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    window.localStorage.setItem("link-theme", nextTheme);
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-  }
+
 
   async function handleCopy(text: string) {
     await navigator.clipboard.writeText(text);

@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { FormEvent, useState } from "react";
 import { ArrowLeft, Github, Loader2, LockKeyhole, Mail, MessageCircle, Moon, Sun } from "lucide-react";
+import { useAppTheme } from "@/lib/theme";
 
 type AuthMode = "login" | "signup" | "forgot" | "update-password";
 
@@ -12,7 +13,6 @@ type AuthCardProps = {
   mode: AuthMode;
 };
 
-type Theme = "light" | "dark";
 
 const copyByMode = {
   login: {
@@ -55,20 +55,7 @@ export function AuthCard({ mode }: AuthCardProps) {
     return "";
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-
-    const savedTheme = window.localStorage.getItem("link-theme");
-    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
-
-    return "dark";
-  });
-
-  function toggleTheme() {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    window.localStorage.setItem("link-theme", nextTheme);
-  }
+  const [theme, toggleTheme] = useAppTheme();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

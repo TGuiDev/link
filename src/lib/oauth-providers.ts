@@ -8,13 +8,26 @@ export type OAuthUserProfile = {
   avatarUrl: string | null;
 };
 
-export function getOAuthRedirectUri(provider: OAuthProvider): string {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+export function getOAuthRedirectUri(provider: OAuthProvider, customBaseUrl?: string): string {
+  const baseUrl = (
+    customBaseUrl ??
+    process.env.APP_URL ??
+    (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+      ? process.env.NEXT_PUBLIC_APP_URL
+      : null) ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "https://link.guidev.site"
+  ).replace(/\/$/, "");
   return `${baseUrl}/api/auth/oauth/${provider}/callback`;
 }
 
-export function getOAuthAuthorizationUrl(provider: OAuthProvider, state: string): string {
-  const redirectUri = getOAuthRedirectUri(provider);
+export function getOAuthAuthorizationUrl(
+  provider: OAuthProvider,
+  state: string,
+  customBaseUrl?: string
+): string {
+  const redirectUri = getOAuthRedirectUri(provider, customBaseUrl);
 
   switch (provider) {
     case "google": {
@@ -64,9 +77,10 @@ export function getOAuthAuthorizationUrl(provider: OAuthProvider, state: string)
 
 export async function exchangeOAuthCodeForProfile(
   provider: OAuthProvider,
-  code: string
+  code: string,
+  customBaseUrl?: string
 ): Promise<OAuthUserProfile> {
-  const redirectUri = getOAuthRedirectUri(provider);
+  const redirectUri = getOAuthRedirectUri(provider, customBaseUrl);
 
   switch (provider) {
     case "google": {

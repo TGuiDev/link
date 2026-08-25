@@ -24,6 +24,7 @@ import { ChainBackdrop3D } from "@/components/chain-backdrop-3d";
 import { Navbar } from "@/components/navbar";
 import { getCachedNavbarUser, loadNavbarUser, type NavbarUser } from "@/lib/navbar-user";
 import { createQrCodeUrl } from "@/lib/qrcode";
+import { useAppTheme } from "@/lib/theme";
 
 type ShortenedLink = {
   slug: string;
@@ -33,7 +34,6 @@ type ShortenedLink = {
 };
 
 type Mode = "random" | "custom";
-type Theme = "light" | "dark";
 type PublicStats = {
   links: number;
 };
@@ -46,12 +46,7 @@ export function LinkCreator() {
   const [url, setUrl] = useState("");
   const [slug, setSlug] = useState("");
   const [mode, setMode] = useState<Mode>("random");
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-    const savedTheme = window.localStorage.getItem("link-theme");
-    if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
-    return "dark";
-  });
+  const [theme, toggleTheme] = useAppTheme();
   const [createdLink, setCreatedLink] = useState<ShortenedLink | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -138,12 +133,7 @@ export function LinkCreator() {
     };
   }, [targetLinksCount]);
 
-  function toggleTheme() {
-    const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
-    window.localStorage.setItem("link-theme", nextTheme);
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-  }
+
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

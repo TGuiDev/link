@@ -18,8 +18,22 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   try {
+    const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+    const proto = request.headers.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+    const detectedOrigin = host ? `${proto}://${host}` : request.nextUrl.origin;
+
+    const baseUrl = (
+      process.env.APP_URL ??
+      (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
+        ? process.env.NEXT_PUBLIC_APP_URL
+        : null) ??
+      (detectedOrigin.includes("localhost") ? detectedOrigin : null) ??
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ??
+      detectedOrigin
+    ).replace(/\/$/, "");
+
     const state = randomBytes(16).toString("hex");
-    const authUrl = getOAuthAuthorizationUrl(provider as OAuthProvider, state);
+    const authUrl = getOAuthAuthorizationUrl(provider as OAuthProvider, state, baseUrl);
 
     const response = NextResponse.redirect(authUrl);
     response.cookies.set(`oauth_state_${provider}`, state, {
@@ -28,6 +42,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 10 // 10 minutos
+    });
+    response.cookies.set(`oauth_origin_${provider}`, baseUrl, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 10
     });
 
     return response;
