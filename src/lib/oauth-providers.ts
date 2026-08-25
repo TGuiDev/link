@@ -8,17 +8,33 @@ export type OAuthUserProfile = {
   avatarUrl: string | null;
 };
 
+export function resolveOAuthBaseUrl(customBaseUrl?: string, incomingHost?: string | null): string {
+  if (customBaseUrl) {
+    return customBaseUrl.replace(/\/$/, "");
+  }
+
+  if (incomingHost && (incomingHost.includes("localhost") || incomingHost.includes("127.0.0.1"))) {
+    const port = incomingHost.split(":")[1] || "3000";
+    return `http://localhost:${port}`;
+  }
+
+  if (process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_APP_URL?.includes("localhost")) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+
+  if (process.env.APP_URL) {
+    return process.env.APP_URL.replace(/\/$/, "");
+  }
+
+  if (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+
+  return "https://link.guidev.site";
+}
+
 export function getOAuthRedirectUri(provider: OAuthProvider, customBaseUrl?: string): string {
-  const baseUrl = (
-    customBaseUrl ??
-    process.env.APP_URL ??
-    (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
-      ? process.env.NEXT_PUBLIC_APP_URL
-      : null) ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "https://link.guidev.site"
-  ).replace(/\/$/, "");
+  const baseUrl = resolveOAuthBaseUrl(customBaseUrl);
   return `${baseUrl}/api/auth/oauth/${provider}/callback`;
 }
 

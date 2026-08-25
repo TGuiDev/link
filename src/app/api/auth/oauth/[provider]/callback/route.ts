@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUsersCollection, ensureMongoIndexes } from "@/lib/mongodb";
-import { exchangeOAuthCodeForProfile, OAuthProvider } from "@/lib/oauth-providers";
+import { exchangeOAuthCodeForProfile, resolveOAuthBaseUrl, OAuthProvider } from "@/lib/oauth-providers";
 import { signSessionToken, getSessionCookieOptions } from "@/lib/jwt";
 
 type RouteContext = {
@@ -15,19 +15,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   const { provider } = await context.params;
   const cookieOrigin = request.cookies.get(`oauth_origin_${provider}`)?.value;
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
-  const currentOrigin = host ? `${proto}://${host}` : request.nextUrl.origin;
-
-  const baseUrl = (
-    cookieOrigin ??
-    process.env.APP_URL ??
-    (process.env.NEXT_PUBLIC_APP_URL && !process.env.NEXT_PUBLIC_APP_URL.includes("localhost")
-      ? process.env.NEXT_PUBLIC_APP_URL
-      : null) ??
-    (currentOrigin.includes("localhost") ? currentOrigin : null) ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ??
-    currentOrigin
-  ).replace(/\/$/, "");
+  const baseUrl = resolveOAuthBaseUrl(cookieOrigin, host);
 
   if (!VALID_PROVIDERS.has(provider as OAuthProvider)) {
     return NextResponse.redirect(`${baseUrl}/login?error=${encodeURIComponent("Provedor inválido.")}`);
