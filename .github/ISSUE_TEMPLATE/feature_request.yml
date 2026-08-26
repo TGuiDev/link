@@ -1,36 +1,46 @@
-name: Feature request
-description: Sugira uma melhoria ou nova funcionalidade.
+name: "💡 Sugestão de Funcionalidade"
+description: "Sugira uma nova funcionalidade, melhoria ou ideia para o projeto Link."
 title: "feat: "
 labels:
-  - enhancement
+  - "enhancement"
+  - "proposal"
 body:
-  - type: textarea
-    id: problem
+  - type: markdown
     attributes:
-      label: Problema ou oportunidade
-      description: Que problema essa sugestão resolve?
-      placeholder: Hoje é difícil...
+      value: |
+        Obrigado por contribuir com novas ideias para o **Link**! Descreva sua proposta de forma clara e focada no valor agregado.
+
+  - type: textarea
+    id: problem_statement
+    attributes:
+      label: Qual problema ou necessidade esta proposta resolve?
+      description: Explique o cenário atual onde essa funcionalidade faria a diferença.
+      placeholder: Atualmente é difícil para criadores de conteúdo acompanhar cliques separados por campanha UTM...
     validations:
       required: true
+
   - type: textarea
-    id: solution
+    id: proposed_solution
     attributes:
-      label: Solução proposta
-      description: Como você imagina essa funcionalidade?
-      placeholder: Seria interessante se...
+      label: Descrição da Solução Proposta
+      description: Como você imagina que essa funcionalidade deve se comportar e ser apresentada ao usuário?
+      placeholder: Adicionar uma aba no dashboard com quebra de cliques por parâmetros UTM (utm_source, utm_medium, utm_campaign)...
     validations:
       required: true
+
   - type: textarea
-    id: alternatives
+    id: alternatives_considered
     attributes:
-      label: Alternativas consideradas
-      description: Existe outro caminho possível?
+      label: Alternativas Consideradas
+      description: Já pensou em outras abordagens ou soluções alternativas?
+      placeholder: Criar múltiplos links curtos para cada variação de UTM manualmente...
     validations:
       required: false
+
   - type: textarea
-    id: context
+    id: additional_context
     attributes:
-      label: Contexto adicional
-      description: Links, imagens, exemplos ou referências.
+      label: Contexto Adicional ou Exemplos
+      description: Adicione links, mockups, referências de outros serviços ou qualquer informação complementar.
     validations:
       required: false

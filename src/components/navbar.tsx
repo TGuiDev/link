@@ -8,6 +8,7 @@ import {
   BookOpen,
   ChevronDown,
   Github,
+  History,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -132,6 +133,10 @@ export function Navbar({ theme: parentTheme, onToggleTheme, user: parentUser }: 
           <NavLink href="/documentacao" active={pathname === "/documentacao"}>
             Documentação
           </NavLink>
+
+          <NavLink href="/changelog" active={pathname === "/changelog"}>
+            Changelog
+          </NavLink>
         </div>
 
         {/* Ações à Direita */}
@@ -205,6 +210,9 @@ export function Navbar({ theme: parentTheme, onToggleTheme, user: parentUser }: 
                     </DropdownLink>
                     <DropdownLink href="/documentacao" icon={<BookOpen size={14} />} onClick={() => setIsMenuOpen(false)}>
                       Documentação
+                    </DropdownLink>
+                    <DropdownLink href="/changelog" icon={<History size={14} />} onClick={() => setIsMenuOpen(false)}>
+                      Changelog
                     </DropdownLink>
                     <div className="my-1 h-px bg-zinc-100 dark:bg-white/5" />
                   </div>

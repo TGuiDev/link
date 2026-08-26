@@ -1,46 +1,124 @@
-# Contribuindo
+# Guia de Contribuição
 
-Obrigado por considerar contribuir com o Link.
+Agradecemos o seu interesse em contribuir com o **Link**! 🎉  
+Este documento define as diretrizes para desenvolvimento, boas práticas de código, convenções de commits e o processo de abertura de Pull Requests.
 
-## Como começar
+---
 
-1. Faça um fork do repositório.
-2. Crie uma branch a partir da `main`.
-3. Instale as dependências com `npm install`.
-4. Configure o `.env.local` usando `.env.example` como base.
-5. Rode o projeto com `npm run dev`.
+## 🚀 Como Começar
 
-## Antes de abrir um PR
+### Pré-requisitos
 
-Rode:
+- **Node.js**: versão 20.x ou 22.x (LTS recomendada)
+- **npm**: versão 10+
+- **MongoDB**: Instância local rodando (`mongodb://localhost:27017`) ou conexão com MongoDB Atlas
+- **Git**: instalado e configurado
+
+### Passo a Passo Local
+
+1. **Faça um Fork** do repositório no GitHub.
+2. **Clone** o seu fork localmente:
+   ```bash
+   git clone https://github.com/SEU_USUARIO/link.git
+   cd link
+   ```
+3. **Crie uma branch** para sua alteração a partir da `main`:
+   ```bash
+   git checkout -b feat/minha-melhoria
+   ```
+4. **Instale as dependências**:
+   ```bash
+   npm install
+   ```
+5. **Configure as variáveis de ambiente**:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Edite o `.env.local` com as configurações do seu ambiente de teste local.
+6. **Inicie o servidor de desenvolvimento**:
+   ```bash
+   npm run dev
+   ```
+   Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.
+
+---
+
+## 📋 Regras de Commits e Branches
+
+Adotamos a especificação [Conventional Commits](COMMIT_CONVENTION.md).
+
+### Nomenclatura de Branches
+
+- `feat/<nome-da-feature>`
+- `fix/<descricao-do-bug>`
+- `refactor/<nome-do-modulo>`
+- `docs/<pagina-ou-assunto>`
+- `chore/<tarefa-de-manutencao>`
+
+### Exemplos de Commits
+
+```txt
+feat(qr-code): adicionar presets de cores predefinidas
+fix(links): corrigir validacao de url sem protocolo
+docs(api): atualizar documentacao de endpoints de métricas
+```
+
+Para mais detalhes e lista de tipos/escopos, consulte o arquivo [COMMIT_CONVENTION.md](COMMIT_CONVENTION.md).
+
+---
+
+## 🧪 Validação e Qualidade de Código
+
+Antes de abrir um Pull Request, garanta que todos os testes e verificações estáticas passam localmente:
 
 ```bash
+# 1. Verificar regras de linting (ESLint)
 npm run lint
+
+# 2. Validar tipagem do TypeScript
+npm run typecheck
+
+# 3. Validar build de produção do Next.js
 npm run build
 ```
 
-Também confira:
+> [!IMPORTANT]
+> Pull Requests com falhas no `lint`, `typecheck` ou `build` não serão aprovados na esteira de CI.
 
-- Não incluiu `.env`, tokens ou chaves reais.
-- A UI continua responsiva.
-- Mudanças de API foram refletidas na documentação.
-- Mudanças de banco foram adicionadas em `database/schema.sql`.
+---
 
-## Padrão de commits
+## 🔒 Regras de Segurança e Privacidade
 
-Prefira commits curtos e claros:
+- **Nunca comite arquivos de ambiente** (`.env`, `.env.local`, `.env.production`).
+- **Nunca inclua credenciais reais** (tokens de OAuth, `AUTH_SECRET`, `API_KEY_SECRET`, strings de conexão do MongoDB Atlas com usuário/senha).
+- Utilize sempre `crypto` / `bcryptjs` / `jose` para manipulação de senhas e tokens criptografados.
+- Se encontrar uma vulnerabilidade de segurança, siga as orientações em [SECURITY.md](SECURITY.md).
 
-```txt
-feat: add QR code presets
-fix: prevent dashboard realtime duplicate channel
-docs: update API setup guide
-```
+---
 
-## Abrindo issues
+## 🔄 Fluxo de Pull Request (PR)
 
-Use os templates disponíveis:
+1. Mantenha sua branch sincronizada com a `main` mais recente antes de abrir o PR:
+   ```bash
+   git fetch origin
+   git rebase origin/main
+   ```
+2. Abra o Pull Request no GitHub utilizando o template padrão fornecido.
+3. Preencha todos os campos do template:
+   - Resumo das alterações
+   - Tipo de mudança
+   - Passos para testar
+   - Evidências visuais (prints ou vídeos) para alterações na UI
+   - Checklist de qualidade
+4. Aguarde a validação automatizada das GitHub Actions (CI).
+5. Responda aos comentários da revisão de código (Code Review) se solicitadas melhorias.
 
-- Bug report para problemas
-- Feature request para melhorias
+---
 
-Inclua prints, logs e passos de reprodução sempre que possível.
+## 💬 Comunicação e Resolução de Dúvidas
+
+- Dúvidas sobre código ou sugestões podem ser abertas na aba de **Issues** ou **Discussions**.
+- Para bugs, abra uma issue utilizando o template de [Bug Report](.github/ISSUE_TEMPLATE/bug_report.yml).
+- Para ideias de novas funcionalidades, use o template de [Feature Request](.github/ISSUE_TEMPLATE/feature_request.yml).
+
+Todos os participantes devem aderir ao nosso [Código de Conduta](CODE_OF_CONDUCT.md).

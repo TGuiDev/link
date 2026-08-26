@@ -1,6 +1,16 @@
 # Link
 
-Encurtador de links feito com Next.js, MongoDB e Tailwind CSS. O projeto inclui criação de links curtos, slugs customizados, dashboard autenticado, métricas, API com chave, documentação e QR Codes customizáveis.
+<p align="left">
+  <a href="https://github.com/TGuiDev/link/actions/workflows/ci.yml"><img src="https://img.shields.io/badge/CI-Passing-2ea44f?style=flat&logo=githubactions&logoColor=white" alt="CI Status" /></a>
+  <a href="https://github.com/TGuiDev/link/actions/workflows/security-audit.yml"><img src="https://img.shields.io/badge/Security_Audit-Passing-2ea44f?style=flat&logo=githubactions&logoColor=white" alt="Security Audit" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat" alt="License: GNU AGPLv3" /></a>
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16-black?style=flat&logo=nextdotjs&logoColor=white" alt="Next.js" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://www.mongodb.com/"><img src="https://img.shields.io/badge/MongoDB-Database-47A248?style=flat&logo=mongodb&logoColor=white" alt="MongoDB" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=flat&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+</p>
+
+Encurtador de links moderno, performático e seguro feito com Next.js, MongoDB e Tailwind CSS. O projeto inclui criação de links curtos, slugs customizados, dashboard autenticado, métricas em tempo real, API REST com autenticação por chave, documentação interativa e QR Codes customizáveis.
 
 ![Link preview](public/meta-banner/link.png)
 
@@ -91,6 +101,7 @@ Em produção, troque `http://localhost:3000` pelo seu domínio principal (ex: `
 /nova-senha             Definição de nova senha
 /dashboard              Dashboard autenticado
 /documentacao           Documentação da API
+/changelog              Histórico de versões e novidades
 /{slug}                 Redirect do link curto
 ```
 
@@ -265,12 +276,22 @@ Antes de publicar o repositório:
 ## Scripts
 
 ```bash
-npm run dev      # inicia o app localmente
-npm run build    # build de produção
-npm run start    # roda o build
-npm run lint     # lint do projeto
+npm run dev        # Inicia o servidor de desenvolvimento
+npm run build      # Executa o build de produção do Next.js
+npm run start      # Inicia o servidor com o build gerado
+npm run lint       # Executa a verificação do ESLint
+npm run typecheck  # Executa a verificação estática de tipos do TypeScript
 ```
+
+## Governança e Documentação
+
+- 📐 **[Arquitetura do Sistema](ARCHITECTURE.md)**: Diagramas, modelos do MongoDB e fluxos de autenticação/redirecionamento.
+- 🤝 **[Guia de Contribuição](CONTRIBUTING.md)**: Como configurar o ambiente, criar branches e abrir Pull Requests.
+- 📝 **[Convenção de Commits](COMMIT_CONVENTION.md)**: Padrão Conventional Commits adotado no projeto.
+- 🛡️ **[Política de Segurança](SECURITY.md)**: Como reportar vulnerabilidades e práticas de proteção de credenciais.
+- 📜 **[Código de Conduta](CODE_OF_CONDUCT.md)**: Nossos padrões de convivência e respeito comunitário.
+- 📦 **[Changelog](CHANGELOG.md)**: Histórico de lançamentos e alterações por versão.
 
 ## Licença
 
-Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE) para mais detalhes.
+Este projeto está sob a licença **GNU Affero General Public License v3.0 (AGPL-3.0)**. Isso significa que você é livre para usar, estudar e modificar o software, mas qualquer modificação hospedada como serviço de rede (SaaS) deve ter seu código-fonte disponibilizado publicamente sob a mesma licença. Veja [LICENSE](LICENSE) para mais detalhes.

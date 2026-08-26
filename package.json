@@ -1,12 +1,13 @@
 {
   "name": "link",
-  "version": "0.1.0",
-  "private": true,
+  "version": "2.0.0",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@types/three": "^0.184.1",

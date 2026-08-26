@@ -1,0 +1,49 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Lint, Typecheck & Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript Typecheck
+        run: npm run typecheck
+
+      - name: Build Next.js Application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_APP_URL: "https://link.guidev.site"
+          MONGODB_URI: "mongodb://localhost:27017/test"
+          MONGODB_DB: "link_test"
+          AUTH_SECRET: "ci-test-secret-at-least-32-characters-long-key-for-jose"
+          API_KEY_SECRET: "ci-test-api-secret-key"

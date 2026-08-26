@@ -12,6 +12,7 @@ import {
   Download,
   ExternalLink,
   Github,
+  History,
   Link2,
   Loader2,
   LockKeyhole,
@@ -469,6 +470,13 @@ export function LinkCreator() {
               >
                 <BookOpen size={13} />
                 <span>Documentação</span>
+              </Link>
+              <Link
+                className="inline-flex items-center gap-1.5 transition hover:text-zinc-950 dark:hover:text-white"
+                href="/changelog"
+              >
+                <History size={13} />
+                <span>Changelog</span>
               </Link>
               <a
                 className="inline-flex items-center gap-1.5 transition hover:text-zinc-950 dark:hover:text-white"
