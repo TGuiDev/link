@@ -43,6 +43,7 @@ Se você identificou uma potencial falha de segurança no projeto:
 
 ---
 
+
 ## 🔑 Gerenciamento de Credenciais e Segredos
 
 ### Variáveis Críticas de Ambiente
