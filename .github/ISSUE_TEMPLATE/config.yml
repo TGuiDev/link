@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Documentação
+  - name: 📖 Documentação da API
     url: https://link.guidev.site/documentacao
-    about: Consulte a documentação da API antes de abrir uma issue.
+    about: Consulte os endpoints, modelos de autenticação e parâmetros antes de abrir uma issue.
+  - name: 🛡️ Reporte Confidencial de Segurança
+    url: https://github.com/TGuiDev/link/security/advisories/new
+    about: Relate vulnerabilidades de segurança de forma privada e segura.

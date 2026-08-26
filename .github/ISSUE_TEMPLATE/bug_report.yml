@@ -1,50 +1,82 @@
-name: Bug report
-description: Relate um problema encontrado no projeto.
-title: "bug: "
+name: "🐛 Relatório de Bug"
+description: "Relate um problema ou comportamento inesperado encontrado no Link."
+title: "fix: "
 labels:
-  - bug
+  - "bug"
+  - "triage"
 body:
   - type: markdown
     attributes:
       value: |
-        Obrigado por reportar um problema. Quanto mais contexto, mais fácil corrigir.
+        Obrigado por dedicar seu tempo para relatar um bug! Por favor, forneça o máximo de contexto possível para facilitar a reprodução e correção rápida.
+
   - type: textarea
     id: description
     attributes:
-      label: Descrição
-      description: O que aconteceu?
-      placeholder: Descreva o bug de forma objetiva.
+      label: Descrição do Problema
+      description: Uma explicação clara e concisa do que está acontecendo de errado.
+      placeholder: Ex: Ao tentar encurtar uma URL com parâmetros de query longos, o sistema retorna erro 500...
     validations:
       required: true
+
   - type: textarea
-    id: steps
+    id: reproduction_steps
     attributes:
-      label: Como reproduzir
-      description: Liste os passos para chegar no problema.
+      label: Passos para Reproduzir
+      description: Como podemos reproduzir o comportamento reportado?
       placeholder: |
-        1. Acesse ...
-        2. Clique em ...
-        3. Veja o erro ...
+        1. Acesse a página '...'
+        2. Clique em '...'
+        3. Preencha o campo com '...'
+        4. Observe o erro
     validations:
       required: true
+
   - type: textarea
-    id: expected
+    id: expected_behavior
     attributes:
-      label: Comportamento esperado
-      placeholder: O que deveria acontecer?
+      label: Comportamento Esperado
+      description: O que você esperava que acontecesse?
+      placeholder: O link deveria ser criado normalmente e redirecionar para a URL com query params preservados.
     validations:
       required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severidade
+      description: Qual o impacto deste problema no uso da aplicação?
+      options:
+        - "Baixa (Incômodo visual ou detalhe menor)"
+        - "Média (Funcionalidade secundária afetada)"
+        - "Alta (Funcionalidade principal indisponível)"
+        - "Crítica (Crash geral, indisponibilidade ou falha grave de fluxo)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs do Console ou Terminal
+      description: Cole aqui logs do terminal ou do DevTools (F12) se houver.
+      render: shell
+      placeholder: Cole o stacktrace ou mensagem de erro aqui...
+    validations:
+      required: false
+
   - type: textarea
     id: screenshots
     attributes:
-      label: Prints ou vídeos
-      description: Se possível, adicione imagens, vídeos ou logs.
+      label: Screenshots ou Gravação
+      description: Arraste imagens ou vídeos demonstrando o problema.
     validations:
       required: false
+
   - type: input
     id: environment
     attributes:
-      label: Ambiente
-      placeholder: Ex. Windows 11, Chrome 125, Node 22
+      label: Informações de Ambiente
+      description: Navegador, Sistema Operacional, versão do Node.js, etc.
+      placeholder: Ex: Chrome 126, Windows 11, Node.js v22.4.0
     validations:
       required: false

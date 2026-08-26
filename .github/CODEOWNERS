@@ -1,0 +1,14 @@
+# Global default owners for all files in the repository
+* @TGuiDev
+
+# Critical authentication and security logic
+/src/lib/auth.ts @TGuiDev
+/src/lib/jwt.ts @TGuiDev
+/SECURITY.md @TGuiDev
+
+# Database schemas, migrations, and connection handlers
+/database/ @TGuiDev
+/src/lib/mongodb.ts @TGuiDev
+
+# CI/CD Workflows and GitHub configuration
+/.github/ @TGuiDev
