@@ -87,7 +87,7 @@ link/
 ├── CHANGELOG.md              # Registro de alterações e versões
 ├── COMMIT_CONVENTION.md      # Convenção de mensagens de commit
 ├── CONTRIBUTING.md           # Guia de contribuição
-├── LICENSE                   # Licença MIT
+├── LICENSE                   # Licença GNU AGPLv3
 ├── README.md                 # Documentação principal
 ├── SECURITY.md               # Política de segurança
 ├── nixpacks.toml             # Configuração para deploy em Nixpacks / Containers
@@ -118,7 +118,7 @@ sequenceDiagram
     participant Browser as Navegador
     participant API as API (/api/auth)
     participant DB as MongoDB
-    
+
     User->>Browser: Preenche login (email + senha)
     Browser->>API: POST /api/auth/login
     API->>DB: Busca usuário por email
